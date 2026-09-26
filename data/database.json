@@ -1,0 +1,693 @@
+{
+  "users": [
+    {
+      "id": "usr-farmer-1",
+      "name": "Ramesh Patel",
+      "email": "farmer@pashu.in",
+      "password": "$2a$10$I0eRtrcU/fsVAzxWOrHyRenAMbk5kwu7ATMo1ROETt0x8.rgOY9/q",
+      "phone": "9876543210",
+      "farmerId": "MH-PUN-2026-8841",
+      "aadhaarNumber": "548291042381",
+      "aadhaarVerified": true,
+      "role": "farmer",
+      "village": "Khed",
+      "district": "Pune",
+      "state": "Maharashtra",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "createdAt": "2026-01-15T08:00:00.000Z"
+    },
+    {
+      "id": "usr-vet-1",
+      "name": "Dr. Anand Sharma",
+      "email": "dr.sharma@vetcare.in",
+      "password": "$2a$10$BNuPn.GuRcKVhmJoApY0COk5ADftj0XJNoQ3DH4/n5RKtY1IBOWsK",
+      "phone": "+91 98220 11223",
+      "role": "vet",
+      "specialization": "Bovine Medicine & Surgery",
+      "licenseNumber": "VCI-MH-2018-8472",
+      "hospitalClinic": "Rural Veterinary Dispensary, Pune Division",
+      "district": "Pune",
+      "experienceYears": 9,
+      "isApproved": true,
+      "verificationStatus": "verified",
+      "location": {
+        "lat": 18.5314,
+        "lng": 73.8446
+      },
+      "availableForCalls": true,
+      "createdAt": "2026-01-10T09:00:00.000Z"
+    },
+    {
+      "id": "usr-vet-2",
+      "name": "Dr. Priya Deshmukh",
+      "email": "priya.vet@gmail.com",
+      "password": "$2a$10$6oaWz/PyRk/EeNXSKHvccOJu.FWQ/sQE2dm5gaoUelQOjvYqsOYwi",
+      "phone": "+91 94230 55667",
+      "role": "vet",
+      "specialization": "Epidemiology & Livestock Diagnostics",
+      "licenseNumber": "VCI-MH-2022-9914",
+      "hospitalClinic": "District Animal PolyClinic, Baramati",
+      "district": "Pune",
+      "experienceYears": 4,
+      "isApproved": true,
+      "verificationStatus": "verified",
+      "location": {
+        "lat": 18.1519,
+        "lng": 74.5772
+      },
+      "availableForCalls": true,
+      "createdAt": "2026-03-01T10:00:00.000Z"
+    },
+    {
+      "id": "usr-vet-3",
+      "name": "Dr. Rajesh Kulkarni",
+      "email": "doctor@vetcare.in",
+      "password": "$2a$10$BNuPn.GuRcKVhmJoApY0COk5ADftj0XJNoQ3DH4/n5RKtY1IBOWsK",
+      "phone": "+91 98334 45566",
+      "role": "vet",
+      "specialization": "Ruminant Health & Infectious Diseases",
+      "licenseNumber": "VCI-MH-2015-4421",
+      "hospitalClinic": "Central Cattle Care Hospital, Pune",
+      "district": "Pune",
+      "experienceYears": 12,
+      "isApproved": true,
+      "verificationStatus": "verified",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "availableForCalls": true,
+      "createdAt": "2026-02-15T09:00:00.000Z"
+    },
+    {
+      "id": "usr-admin-1",
+      "name": "Rajeev Menon (IAS)",
+      "email": "admin@animalhusbandry.gov.in",
+      "password": "$2a$10$p9PEmRC9XkfxtGurwER4SuodY/0iAno.MrC099bW4h4SOZGebBltK",
+      "phone": "+91 98110 99887",
+      "role": "government_admin",
+      "department": "Department of Animal Husbandry & Dairying (DAHD)",
+      "designation": "Director of Disease Surveillance & GIS Division",
+      "location": {
+        "lat": 28.6139,
+        "lng": 77.209
+      },
+      "createdAt": "2025-11-01T00:00:00.000Z"
+    }
+  ],
+  "animals": [
+    {
+      "id": "SYS-ANML-001234",
+      "tagNumber": "MH001234",
+      "ownerId": "usr-farmer-1",
+      "name": "Gauri",
+      "species": "Cow",
+      "breed": "HF Cross",
+      "ageYears": 3,
+      "gender": "Female",
+      "lactationStage": "Active Lactation (2nd Month)",
+      "dailyMilkYieldLiters": 16.5,
+      "photoUrl": "assets/images/animal_cow.png",
+      "vaccinationStatus": "Up to Date",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "healthStatus": "Healthy",
+      "createdAt": "2026-01-20T10:00:00.000Z"
+    },
+    {
+      "id": "SYS-ANML-002345",
+      "tagNumber": "MH002345",
+      "ownerId": "usr-farmer-1",
+      "name": "Lakshmi",
+      "species": "Buffalo",
+      "breed": "Murrah",
+      "ageYears": 5,
+      "gender": "Female",
+      "lactationStage": "Active Lactation",
+      "dailyMilkYieldLiters": 12,
+      "photoUrl": "assets/images/animal_buffalo.png",
+      "vaccinationStatus": "Up to Date",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "healthStatus": "Sick (Under Examination)",
+      "createdAt": "2026-01-20T10:30:00.000Z",
+      "updatedAt": "2026-09-26T13:25:19.976Z"
+    },
+    {
+      "id": "SYS-ANML-003456",
+      "tagNumber": "MH003456",
+      "ownerId": "usr-farmer-1",
+      "name": "Radha",
+      "species": "Cow",
+      "breed": "Gir",
+      "ageYears": 2,
+      "gender": "Female",
+      "lactationStage": "Heifer",
+      "dailyMilkYieldLiters": 0,
+      "photoUrl": "assets/images/animal_cow.png",
+      "vaccinationStatus": "Up to Date",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "healthStatus": "Healthy",
+      "createdAt": "2026-02-10T11:00:00.000Z"
+    },
+    {
+      "id": "SYS-ANML-004567",
+      "tagNumber": "MH004567",
+      "ownerId": "usr-farmer-1",
+      "name": "Champa",
+      "species": "Goat",
+      "breed": "Boer",
+      "ageYears": 1,
+      "gender": "Female",
+      "lactationStage": "Active",
+      "dailyMilkYieldLiters": 2.5,
+      "photoUrl": "assets/images/animal_goat.png",
+      "vaccinationStatus": "Up to Date",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "healthStatus": "Healthy",
+      "createdAt": "2026-02-15T09:30:00.000Z"
+    },
+    {
+      "id": "SYS-ANML-005678",
+      "tagNumber": "MH005678",
+      "ownerId": "usr-farmer-1",
+      "name": "Nandi",
+      "species": "Cow",
+      "breed": "Sahiwal Bull",
+      "ageYears": 4,
+      "gender": "Male",
+      "lactationStage": "N/A",
+      "dailyMilkYieldLiters": 0,
+      "photoUrl": "assets/images/animal_cow.png",
+      "vaccinationStatus": "Up to Date",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "healthStatus": "Healthy",
+      "createdAt": "2026-02-05T12:00:00.000Z"
+    }
+  ],
+  "cases": [
+    {
+      "id": "case-5001",
+      "animalId": "SYS-ANML-002345",
+      "farmerId": "usr-farmer-1",
+      "vetId": "usr-vet-1",
+      "symptoms": [
+        "High Fever (104.5°F)",
+        "Excessive Drooling & Salivation",
+        "Blisters / Ulcers on tongue and gums",
+        "Severe Lameness / reluctance to stand",
+        "Sudden drop in milk yield"
+      ],
+      "description": "Cow stopped feeding yesterday evening. Mouth has painful vesicles with heavy stringy saliva and feet show swelling around the coronary band.",
+      "photoUrls": [
+        "https://images.unsplash.com/photo-1546445317-29f4545e9d53?auto=format&fit=crop&w=600&q=80"
+      ],
+      "aiRiskScore": 92,
+      "aiPredictedDisease": "Foot-and-Mouth Disease (FMD)",
+      "aiConfidence": 0.94,
+      "aiSeverity": "Critical",
+      "suspectedOutbreak": true,
+      "status": "under_examination",
+      "vetNotes": "Clinical signs highly consistent with Aphthovirus (FMD Type O). Quarantine instituted. Deep vesicle swab dispatched to Regional Disease Diagnostic Lab.",
+      "recommendedTests": [
+        {
+          "id": "test-1",
+          "testName": "RT-PCR for FMD Viral RNA",
+          "labName": "Central Animal Disease Investigation Lab, Pune",
+          "status": "Sample Dispatched",
+          "orderedAt": "2026-03-24T11:00:00.000Z"
+        },
+        {
+          "id": "test-2",
+          "testName": "Liquid-Phase Blocking ELISA (LPBE)",
+          "labName": "IVRI Disease Surveillance Node",
+          "status": "Pending Lab Processing",
+          "orderedAt": "2026-03-24T11:00:00.000Z"
+        }
+      ],
+      "prescriptions": [
+        {
+          "id": "rx-1",
+          "medicineName": "Melloxicam 5mg/ml (NSAID Anti-inflammatory)",
+          "dosage": "15 ml IM once daily for 3 days",
+          "instructions": "For pain relief, fever control, and inflammatory swelling reduction.",
+          "withdrawalPeriodDays": 5
+        },
+        {
+          "id": "rx-2",
+          "medicineName": "Potassium Permanganate 1:1000 mouthwash",
+          "dosage": "Gently wash mouth lesions twice daily after feeding",
+          "instructions": "Antiseptic lesion cleansing to prevent secondary bacterial sepsis."
+        },
+        {
+          "id": "rx-3",
+          "medicineName": "Ceftiofur Sodium 1g Injection",
+          "dosage": "1 vial IM once daily for 5 days",
+          "instructions": "Broad spectrum coverage for secondary hoof infections."
+        }
+      ],
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-03-24T09:30:00.000Z",
+      "updatedAt": "2026-03-25T14:00:00.000Z"
+    },
+    {
+      "id": "case-5002",
+      "animalId": "anim-102",
+      "farmerId": "usr-farmer-1",
+      "vetId": "usr-vet-1",
+      "symptoms": [
+        "Mild Udder Hardness in Left Quarter",
+        "Milk Flakes during morning milking"
+      ],
+      "description": "Noticed slight clots in milk strainer. Buffalo is eating normally.",
+      "photoUrls": [],
+      "aiRiskScore": 48,
+      "aiPredictedDisease": "Subclinical Mastitis",
+      "aiConfidence": 0.82,
+      "aiSeverity": "Moderate",
+      "suspectedOutbreak": false,
+      "status": "treated",
+      "vetNotes": "California Mastitis Test (CMT) positive (+2) on left rear quarter. Intramammary antibiotic infusion administered.",
+      "recommendedTests": [],
+      "prescriptions": [
+        {
+          "id": "rx-4",
+          "medicineName": "Cloxacillin Intramammary Infusion",
+          "dosage": "1 tube infused into affected quarter after complete milk out",
+          "instructions": "Milk withdrawal period: 72 hours. Do not sell milk during treatment.",
+          "withdrawalPeriodDays": 3
+        }
+      ],
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-03-18T07:15:00.000Z",
+      "updatedAt": "2026-03-20T16:00:00.000Z"
+    },
+    {
+      "id": "case-6bdf39dd",
+      "animalId": "SYS-ANML-002345",
+      "farmerId": "usr-farmer-1",
+      "vetId": null,
+      "symptoms": [
+        "Bleeding",
+        "Gait Change"
+      ],
+      "description": "jwjwjejekdkdk",
+      "photoUrls": [],
+      "aiRiskScore": 35,
+      "aiPredictedDisease": "General Livestock Malaise / Undiagnosed",
+      "aiConfidence": 0.6,
+      "aiSeverity": "Low",
+      "suspectedOutbreak": false,
+      "status": "reported",
+      "vetNotes": "",
+      "recommendedTests": [],
+      "prescriptions": [],
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-26T13:25:19.975Z",
+      "updatedAt": "2026-09-26T13:25:19.975Z"
+    }
+  ],
+  "appointments": [
+    {
+      "id": "apt-301",
+      "farmerId": "usr-farmer-1",
+      "vetId": "usr-vet-1",
+      "animalId": "anim-101",
+      "caseId": "case-5001",
+      "scheduledAt": "2026-03-26T15:30:00.000Z",
+      "type": "video_call",
+      "status": "completed",
+      "callRoomId": "room-pashu-5001",
+      "callNotes": "Conducted video exam of mouth sores. Instructed farmer on strict isolation of sick cattle and footbath with 4% sodium carbonate.",
+      "callDurationMinutes": 14,
+      "createdAt": "2026-03-24T10:00:00.000Z"
+    },
+    {
+      "id": "apt-302",
+      "farmerId": "usr-farmer-1",
+      "vetId": "usr-vet-1",
+      "animalId": "anim-101",
+      "caseId": "case-5001",
+      "scheduledAt": "2026-03-27T11:00:00.000Z",
+      "type": "physical_visit",
+      "status": "scheduled",
+      "callRoomId": null,
+      "callNotes": "Scheduled follow-up visit to review healing of hoof lesions and administer booster multivitamin.",
+      "createdAt": "2026-03-25T15:00:00.000Z"
+    },
+    {
+      "id": "apt-bd3b4eb4",
+      "farmerId": "usr-farmer-1",
+      "farmerName": "Ramesh Patel",
+      "vetId": "usr-vet-1",
+      "vetName": "Dr. Anand Sharma",
+      "vetSpecialization": "Bovine Medicine & Surgery",
+      "vetPhone": "+91 98220 11223",
+      "hospitalClinic": "Rural Veterinary Dispensary, Pune Division",
+      "animalId": "SYS-ANML-001234",
+      "animalName": "Gauri",
+      "animalTag": "MH001234",
+      "caseId": null,
+      "scheduledAt": "2026-09-26T11:08:24.440Z",
+      "appointmentTimeFormatted": "26 Sept 2026, 04:38 pm",
+      "type": "video_call",
+      "status": "scheduled",
+      "callRoomId": "room-77492996-b",
+      "notes": "Cow showing mild fever and fatigue",
+      "callNotes": "",
+      "callDurationMinutes": 0,
+      "createdAt": "2026-09-26T10:48:24.453Z"
+    },
+    {
+      "id": "apt-3f1d419b",
+      "farmerId": "usr-farmer-1",
+      "farmerName": "Ramesh Patel",
+      "vetId": "usr-vet-1",
+      "vetName": "Dr. Anand Sharma",
+      "vetSpecialization": "Bovine Medicine & Surgery",
+      "vetPhone": "+91 98220 11223",
+      "hospitalClinic": "Rural Veterinary Dispensary, Pune Division",
+      "animalId": "SYS-ANML-002345",
+      "animalName": "Lakshmi",
+      "animalTag": "MH002345",
+      "caseId": null,
+      "scheduledAt": "2026-09-26T13:44:51.787Z",
+      "appointmentTimeFormatted": "26 Sept 2026, 07:14 pm",
+      "type": "video_call",
+      "status": "scheduled",
+      "callRoomId": "room-6df5215b-a",
+      "notes": "Consultation request for Lakshmi (Buffalo)",
+      "callNotes": "",
+      "callDurationMinutes": 0,
+      "createdAt": "2026-09-26T13:24:51.809Z"
+    }
+  ],
+  "vaccinationSchedules": [
+    {
+      "id": "vac-101",
+      "title": "National Animal Disease Control Programme - FMD Vaccination Round 4",
+      "diseaseTarget": "Foot-and-Mouth Disease (FMD)",
+      "targetSpecies": [
+        "Cattle",
+        "Buffalo"
+      ],
+      "district": "Pune",
+      "state": "Maharashtra",
+      "centerName": "Khed Taluka Veterinary Hospital",
+      "startDate": "2026-04-01",
+      "endDate": "2026-04-20",
+      "totalDosesAllocated": 50000,
+      "dosesAdministered": 32400,
+      "isFreeGovernmentDrive": true,
+      "batchNumber": "FMD-IN-2026-B94",
+      "status": "active"
+    },
+    {
+      "id": "vac-102",
+      "title": "Brucellosis-Free Herd Mission (Calf-hood S19)",
+      "diseaseTarget": "Brucellosis (B. abortus strain 19)",
+      "targetSpecies": [
+        "Female Calves (4-8 months)"
+      ],
+      "district": "Pune",
+      "state": "Maharashtra",
+      "centerName": "District PolyClinic Mobile Van",
+      "startDate": "2026-04-10",
+      "endDate": "2026-04-30",
+      "totalDosesAllocated": 15000,
+      "dosesAdministered": 4200,
+      "isFreeGovernmentDrive": true,
+      "batchNumber": "BRU-S19-M41",
+      "status": "upcoming"
+    },
+    {
+      "id": "vac-103",
+      "title": "Lumpy Skin Disease (LSD) Prophylactic Drive",
+      "diseaseTarget": "Lumpy Skin Disease (Goat Pox Virus vaccine homologous strain)",
+      "targetSpecies": [
+        "Cattle",
+        "Buffalo"
+      ],
+      "district": "Ahmednagar",
+      "state": "Maharashtra",
+      "centerName": "Central Dispensary Shrirampur",
+      "startDate": "2026-03-10",
+      "endDate": "2026-03-31",
+      "totalDosesAllocated": 40000,
+      "dosesAdministered": 38100,
+      "isFreeGovernmentDrive": true,
+      "batchNumber": "LSD-GPV-882",
+      "status": "active"
+    }
+  ],
+  "vaccinationBookings": [
+    {
+      "id": "vb-801",
+      "scheduleId": "vac-101",
+      "farmerId": "usr-farmer-1",
+      "animalId": "anim-102",
+      "bookedDate": "2026-04-05",
+      "slot": "Morning (09:00 AM - 12:00 PM)",
+      "status": "confirmed",
+      "certificateIssued": false
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-1",
+      "name": "Amul Balanced Cattle Feed (Type II - 50 kg)",
+      "category": "feed",
+      "price": 1350,
+      "mrp": 1480,
+      "stock": 120,
+      "rating": 4.8,
+      "verifiedGovtApproved": true,
+      "description": "BIS-certified compound dairy cattle feed enriched with bypass protein, calcium, phosphorus, and essential vitamins for high-yield dairy cows.",
+      "imageUrl": "https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "prod-2",
+      "name": "Cheated Mineral Mixture (Agrimin Forte 5 kg)",
+      "category": "feed",
+      "price": 680,
+      "mrp": 750,
+      "stock": 85,
+      "rating": 4.9,
+      "verifiedGovtApproved": true,
+      "description": "Trace minerals with zinc, copper, cobalt, selenium, and biotin. Enhances reproductive efficiency, milk synthesis, and hoof horn hardness.",
+      "imageUrl": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "prod-3",
+      "name": "Veterinary Topical Wound Spray (Topicure Max 250ml)",
+      "category": "medicine",
+      "price": 195,
+      "mrp": 220,
+      "stock": 200,
+      "rating": 4.7,
+      "verifiedGovtApproved": true,
+      "description": "Herbal antiseptic wound healer, fly repellent, and maggoticide for animal cuts, surgical wounds, and FMD foot sores.",
+      "imageUrl": "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "prod-4",
+      "name": "Albendazole 2.5% Oral Suspension (1 Litre)",
+      "category": "medicine",
+      "price": 420,
+      "mrp": 470,
+      "stock": 150,
+      "rating": 4.6,
+      "verifiedGovtApproved": true,
+      "description": "Broad-spectrum veterinary dewormer for liver flukes, gastrointestinal roundworms, and tapeworms in cattle, buffalo, and goats.",
+      "imageUrl": "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=500&q=80"
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-701",
+      "farmerId": "usr-farmer-1",
+      "items": [
+        {
+          "productId": "prod-1",
+          "name": "Amul Balanced Cattle Feed (Type II - 50 kg)",
+          "quantity": 2,
+          "price": 1350
+        },
+        {
+          "productId": "prod-3",
+          "name": "Veterinary Topical Wound Spray (Topicure Max 250ml)",
+          "quantity": 1,
+          "price": 195
+        }
+      ],
+      "totalAmount": 2895,
+      "deliveryAddress": "House 42, Gram Panchayat Khed, Dist Pune, Maharashtra",
+      "paymentMethod": "Cash on Delivery (Kisan Credit Card / UPI)",
+      "status": "dispatched",
+      "orderedAt": "2026-03-24T12:30:00.000Z"
+    }
+  ],
+  "sellListings": [
+    {
+      "id": "sell-901",
+      "farmerId": "usr-farmer-1",
+      "title": "High-Genetics Pure Sahiwal Bull (3 Years)",
+      "category": "livestock",
+      "expectedPrice": 48000,
+      "animalTag": "IN-MH-9481-03",
+      "description": "Disease-free, verified Brucella-negative, excellent pedigree for artificial insemination or dairy breeding.",
+      "photoUrl": "https://images.unsplash.com/photo-1527153857715-3908f2ae5e81?auto=format&fit=crop&w=600&q=80",
+      "contactPhone": "+91 98765 43210",
+      "village": "Khed, Pune",
+      "status": "active",
+      "createdAt": "2026-03-21T09:00:00.000Z"
+    },
+    {
+      "id": "sell-902",
+      "farmerId": "usr-farmer-1",
+      "title": "Fresh Organic Cow Milk (Daily 20L Available)",
+      "category": "dairy",
+      "expectedPrice": 55,
+      "description": "Direct farm A2 raw Gir cow milk, SNF 8.5+, Fat 4.5%+, no oxytocin or adulteration.",
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=600&q=80",
+      "contactPhone": "+91 98765 43210",
+      "village": "Khed, Pune",
+      "status": "active",
+      "createdAt": "2026-03-22T08:00:00.000Z"
+    }
+  ],
+  "outbreaks": [
+    {
+      "id": "outbreak-01",
+      "disease": "Foot-and-Mouth Disease (FMD)",
+      "severity": "Critical",
+      "clusterRadiusKm": 15,
+      "epicenter": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "casesCount": 14,
+      "suspectedHerdsCount": 8,
+      "status": "Active Containment Zone",
+      "quarantineActive": true,
+      "reportedByVetId": "usr-vet-1",
+      "description": "Severe cluster of vesicular stomatitis and drooling in 14 bovines across 3 contiguous villages. Containment ring and animal movement restrictions enforced.",
+      "containmentMeasures": [
+        "Immediate ban on cattle transport within 15 km buffer radius",
+        "Emergency ring vaccination deployment within 48 hours",
+        "Daily disinfectant spray at livestock checkpoints"
+      ],
+      "createdAt": "2026-03-23T11:00:00.000Z"
+    },
+    {
+      "id": "outbreak-02",
+      "disease": "Lumpy Skin Disease (LSD)",
+      "severity": "High",
+      "clusterRadiusKm": 25,
+      "epicenter": {
+        "lat": 19.0948,
+        "lng": 74.748
+      },
+      "district": "Ahmednagar",
+      "state": "Maharashtra",
+      "casesCount": 29,
+      "suspectedHerdsCount": 18,
+      "status": "Monitoring & Ring Vaccination",
+      "quarantineActive": false,
+      "reportedByVetId": "usr-vet-2",
+      "description": "Nodular lesions and high pyrexia reported in Ahmednagar dairy belt. Vector control and goat pox ring vaccination underway.",
+      "containmentMeasures": [
+        "Intensive mosquito and tick fumigation in cowsheds",
+        "Isolation of nodular cattle to closed pens"
+      ],
+      "createdAt": "2026-03-15T09:00:00.000Z"
+    },
+    {
+      "id": "outbreak-03",
+      "disease": "African Swine Fever (ASF)",
+      "severity": "Watch",
+      "clusterRadiusKm": 10,
+      "epicenter": {
+        "lat": 26.1445,
+        "lng": 91.7362
+      },
+      "district": "Kamrup",
+      "state": "Assam",
+      "casesCount": 6,
+      "suspectedHerdsCount": 4,
+      "status": "Under Lab Verification",
+      "quarantineActive": true,
+      "reportedByVetId": null,
+      "description": "High mortality in backyard swine herds. Biosecurity perimeter established pending ELISA and PCR confirmation.",
+      "containmentMeasures": [
+        "Strict biosecurity at farm borders",
+        "Carcass deep burial protocol with quicklime"
+      ],
+      "createdAt": "2026-03-20T14:00:00.000Z"
+    }
+  ],
+  "broadcasts": [
+    {
+      "id": "bcast-1",
+      "title": "CRITICAL ALERT: FMD Outbreak in Khed-Pune Sector",
+      "message": "Foot-and-Mouth Disease (FMD) detected in Khed taluka. Isolate salivating cattle immediately, do not take cattle to common grazing grounds or water bodies. Call 1962 for free vet deployment.",
+      "targetDistrict": "Pune",
+      "targetAudience": "Farmers & Veterinarians",
+      "urgency": "Immediate",
+      "sentAt": "2026-03-24T12:00:00.000Z"
+    }
+  ],
+  "regulations": [
+    {
+      "id": "reg-01",
+      "productName": "Oxytetracycline 200 LA (Counterfeit Batch Alert)",
+      "batchNumber": "OTC-F2025-901",
+      "manufacturer": "Substandard Formulation Labs, Solapur (Unregistered)",
+      "status": "Seized & Banned",
+      "issueReported": "Found to contain less than 12% active ingredient with particulate contamination. Immediate product recall ordered across retail chemist channels.",
+      "reportedDate": "2026-03-12"
+    },
+    {
+      "id": "reg-02",
+      "productName": "NutriMil Premium Dairy Booster",
+      "batchNumber": "NDB-2026-44",
+      "manufacturer": "National Agro Feeders Ltd",
+      "status": "Approved & Certified (BIS IS:2052 compliant)",
+      "issueReported": "Passed chemical toxicology, aflatoxin B1 below 10 ppb threshold.",
+      "reportedDate": "2026-03-01"
+    }
+  ]
+}
