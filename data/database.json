@@ -1,6 +1,29 @@
 {
   "users": [
     {
+      "id": "usr-admin-1",
+      "name": "Government Admin",
+      "email": "admin@pashuseva.gov.in",
+      "password": "$2a$10$DGz82pr573ukiGlV3I6VQ.CluruAZpPCleJvCBp.bJvudbmh/Zwt.",
+      "phone": "9000000001",
+      "role": "government_admin",
+      "department": "Department of Animal Husbandry & Dairying",
+      "state": "Maharashtra",
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "usr-lab-1",
+      "name": "Lab Staff",
+      "email": "lab@pashuseva.gov.in",
+      "password": "$2a$10$//mflM..VLaMgvoTrIBpT.3JwDjv.D2LSP76.c4zLe56AfqICmQdq",
+      "phone": "9000000002",
+      "role": "lab_staff",
+      "labName": "District Veterinary Diagnostic Lab, Pune",
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
       "id": "usr-farmer-1",
       "name": "Ramesh Patel",
       "email": "farmer@pashu.in",
@@ -686,7 +709,7 @@
     },
     {
       "id": "OBK-2026-669607",
-      "outbreakId": "OBK-2026-327736",
+      "outbreakId": "OBK-2026-602076",
       "diseaseCategory": "General Bovine Health",
       "region": "Pune, Maharashtra",
       "district": "Pune",
@@ -714,7 +737,7 @@
       },
       "forecastSnapshot": [
         {
-          "timestamp": "2026-09-27T14:56:45.350Z",
+          "timestamp": "2026-09-27T16:26:46.338Z",
           "temp": 29,
           "humidity": 70,
           "rain": 0.5,
@@ -722,7 +745,7 @@
           "description": "light rain shower"
         },
         {
-          "timestamp": "2026-09-27T17:56:45.351Z",
+          "timestamp": "2026-09-27T19:26:46.338Z",
           "temp": 27.5,
           "humidity": 75,
           "rain": 2.1,
@@ -730,7 +753,7 @@
           "description": "moderate rain"
         },
         {
-          "timestamp": "2026-09-27T23:56:45.351Z",
+          "timestamp": "2026-09-28T01:26:46.338Z",
           "temp": 25,
           "humidity": 82,
           "rain": 0,
@@ -738,7 +761,7 @@
           "description": "overcast"
         },
         {
-          "timestamp": "2026-09-28T11:56:45.352Z",
+          "timestamp": "2026-09-28T13:26:46.338Z",
           "temp": 26.5,
           "humidity": 78,
           "rain": 1.2,
@@ -747,7 +770,7 @@
         }
       ],
       "modelVersion": "outbreak-risk-v1.2",
-      "updatedAt": "2026-09-27T11:56:45.726Z"
+      "updatedAt": "2026-09-27T13:26:46.718Z"
     }
   ],
   "broadcasts": [
