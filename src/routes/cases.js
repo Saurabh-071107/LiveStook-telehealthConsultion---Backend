@@ -25,15 +25,21 @@ router.get('/', authenticate, async (req, res) => {
 
     if (isConnected) {
       const query = {};
-      const role = (req.user.role || '').toUpperCase();
+      const role = (req.user.role || '').toLowerCase();
 
-      if (role === 'FARMER') {
-        query.farmerId = req.user._id || req.user.id;
-      } else if (role === 'VETERINARIAN') {
+      if (role === 'farmer') {
+        // Match by farmerId string (JSON-backed users use string IDs like 'usr-farmer-1')
         query.$or = [
-          { assignedVetId: req.user._id || req.user.id },
-          { status: { $in: ['QUEUED', 'PENDING_ACCEPTANCE'] } }
-        ];
+          { farmerId: req.user._id ? req.user._id.toString() : null },
+          { farmerId: req.user.id }
+        ].filter(o => Object.values(o)[0] != null);
+        if (query.$or.length === 1) { query.farmerId = query.$or[0].farmerId; delete query.$or; }
+      } else if (role === 'vet' || role === 'veterinarian') {
+        query.$or = [
+          { assignedVetId: req.user._id ? req.user._id.toString() : null },
+          { assignedVetId: req.user.id },
+          { status: { $in: ['QUEUED', 'PENDING_ACCEPTANCE', 'VET_REQUIRED'] } }
+        ].filter(o => !o.assignedVetId || o.assignedVetId != null);
       }
 
       if (status) query.status = status;

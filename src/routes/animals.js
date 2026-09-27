@@ -162,10 +162,11 @@ router.get('/:id/medical-report', authenticate, async (req, res) => {
   }
 });
 
-// POST /api/animals (Register new animal with unique Ear Tag validation)
-router.post('/', authenticate, requireRole('farmer', 'FARMER', 'government_admin', 'ADMIN'), async (req, res) => {
+// Shared animal registration handler (used by both POST / and POST /register)
+async function registerAnimalHandler(req, res) {
   try {
-    const { name, age, ageYears, tagNumber, earTagNumber, earTagId, species, type, breed, gender, photoUrl } = req.body;
+    const { name, age, ageYears, tagNumber, earTagNumber, earTagId, species, type, breed, gender, photoUrl,
+            weightKg, location, district, state } = req.body;
 
     const resolvedName = name ? name.trim() : '';
     const resolvedTag = (tagNumber || earTagNumber || earTagId || '').trim().toUpperCase();
@@ -215,6 +216,7 @@ router.post('/', authenticate, requireRole('farmer', 'FARMER', 'government_admin
       type: resolvedSpecies,
       breed: resolvedBreed,
       ageYears: resolvedAge,
+      weightKg: Number(weightKg) || 0,
       age: `${resolvedAge} years`,
       gender: gender || 'Female',
       lactationStage: 'Active',
@@ -222,16 +224,17 @@ router.post('/', authenticate, requireRole('farmer', 'FARMER', 'government_admin
       photoUrl: photoUrl || defaultPhoto,
       vaccinationStatus: 'Up to Date',
       healthStatus: 'HEALTHY',
-      location: req.user.location || { lat: 18.5204, lng: 73.8567 },
-      district: req.user.district || 'Pune',
-      state: req.user.state || 'Maharashtra',
+      location: location || req.user.location || { lat: 18.5204, lng: 73.8567 },
+      district: district || req.user.district || 'Pune',
+      state: state || req.user.state || 'Maharashtra',
       createdAt: new Date().toISOString()
     };
 
     if (isConnected) {
+      const loc = animalDoc.location;
       await Animal.create({
         ...animalDoc,
-        location: { type: 'Point', coordinates: [req.user.location?.lng || 73.8567, req.user.location?.lat || 18.5204] }
+        location: { type: 'Point', coordinates: [loc.lng || 73.8567, loc.lat || 18.5204] }
       });
     }
 
@@ -241,7 +244,16 @@ router.post('/', authenticate, requireRole('farmer', 'FARMER', 'government_admin
     console.error('Error adding animal:', err);
     return res.status(500).json({ error: 'Failed to register animal.' });
   }
-});
+}
+
+// POST /api/animals/register (Alias — Flutter app compatibility)
+router.post('/register', authenticate, requireRole('farmer', 'FARMER', 'government_admin', 'ADMIN'), registerAnimalHandler);
+
+// POST /api/animals (Register new animal with unique Ear Tag validation)
+router.post('/', authenticate, requireRole('farmer', 'FARMER', 'government_admin', 'ADMIN'), registerAnimalHandler);
+
+
+
 
 // POST /api/animals/:id/images (Support 4-side animal images: FRONT, BACK, LEFT, RIGHT)
 router.post('/:id/images', authenticate, async (req, res) => {
