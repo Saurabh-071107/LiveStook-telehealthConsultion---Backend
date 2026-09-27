@@ -578,6 +578,93 @@
       "district": "Pune",
       "state": "Maharashtra",
       "createdAt": "2026-09-27T19:17:22.794Z"
+    },
+    {
+      "id": "ANM-2026-957298",
+      "animalId": "ANM-2026-957298",
+      "earTagId": "TAG-293697",
+      "tagNumber": "TAG-293697",
+      "farmerId": "6ab97109d974d844664eefc3",
+      "ownerId": "6ab97109d974d844664eefc2",
+      "farmerUserId": "6ab97109d974d844664eefc2",
+      "name": "Nandi",
+      "species": "Cow",
+      "type": "Cow",
+      "breed": "Gir",
+      "ageYears": 4,
+      "weightKg": 0,
+      "age": "4 years",
+      "gender": "Female",
+      "lactationStage": "Active",
+      "dailyMilkYieldLiters": 10,
+      "photoUrl": "assets/images/animal_cow.png",
+      "vaccinationStatus": "Up to Date",
+      "healthStatus": "HEALTHY",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T19:39:54.021Z"
+    },
+    {
+      "id": "ANM-2026-659746",
+      "animalId": "ANM-2026-659746",
+      "earTagId": "TAG-604880",
+      "tagNumber": "TAG-604880",
+      "farmerId": "6ab9716ebe4742e014fab730",
+      "ownerId": "6ab9716dbe4742e014fab72f",
+      "farmerUserId": "6ab9716dbe4742e014fab72f",
+      "name": "Nandi",
+      "species": "Cow",
+      "type": "Cow",
+      "breed": "Gir",
+      "ageYears": 4,
+      "weightKg": 0,
+      "age": "4 years",
+      "gender": "Female",
+      "lactationStage": "Active",
+      "dailyMilkYieldLiters": 10,
+      "photoUrl": "assets/images/animal_cow.png",
+      "vaccinationStatus": "Up to Date",
+      "healthStatus": "HEALTHY",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T19:41:34.267Z"
+    },
+    {
+      "id": "ANM-2026-527630",
+      "animalId": "ANM-2026-527630",
+      "earTagId": "TAG-974811",
+      "tagNumber": "TAG-974811",
+      "farmerId": "6ab9718ebe4742e014fab73a",
+      "ownerId": "6ab9718ebe4742e014fab739",
+      "farmerUserId": "6ab9718ebe4742e014fab739",
+      "name": "Nandi",
+      "species": "Cow",
+      "type": "Cow",
+      "breed": "Gir",
+      "ageYears": 4,
+      "weightKg": 0,
+      "age": "4 years",
+      "gender": "Female",
+      "lactationStage": "Active",
+      "dailyMilkYieldLiters": 10,
+      "photoUrl": "assets/images/animal_cow.png",
+      "vaccinationStatus": "Up to Date",
+      "healthStatus": "HEALTHY",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T19:42:06.693Z"
     }
   ],
   "cases": [
@@ -715,6 +802,146 @@
       "state": "Maharashtra",
       "createdAt": "2026-09-26T13:25:19.975Z",
       "updatedAt": "2026-09-26T13:25:19.975Z"
+    },
+    {
+      "id": "CASE-2026-433045",
+      "caseId": "CASE-2026-433045",
+      "animalId": "ANM-2026-659746",
+      "animalTag": "TAG-604880",
+      "farmerId": "6ab9716ebe4742e014fab730",
+      "farmerUserId": "6ab9716dbe4742e014fab72f",
+      "farmerPhone": "9820883201",
+      "assignedVetId": null,
+      "vetId": null,
+      "status": "VET_REQUIRED",
+      "majorSymptoms": [
+        "Fever",
+        "Blisters in mouth",
+        "Excessive drooling",
+        "Limping on hoof"
+      ],
+      "symptoms": [
+        "Fever",
+        "Blisters in mouth",
+        "Excessive drooling",
+        "Limping on hoof"
+      ],
+      "additionalSymptoms": "Cow is salivating heavily and has vesicles on tongue with high temperature.",
+      "description": "Cow is salivating heavily and has vesicles on tongue with high temperature.",
+      "photoUrls": [
+        "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      ],
+      "images": [
+        "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      ],
+      "aiAnalysis": {
+        "riskLevel": "HIGH",
+        "severity": "HIGH",
+        "primaryCondition": "Foot and Mouth Disease (FMD)",
+        "possibleConditions": [
+          "Foot and Mouth Disease (FMD)",
+          "Bovine Vesicular Stomatitis",
+          "Malignant Catarrhal Fever"
+        ],
+        "confidence": 0.89,
+        "recommendedTests": [
+          "RT-PCR for FMDV",
+          "ELISA for Viral Antigen (3ABC ELISA)",
+          "Epithelial Lesion Biopsy"
+        ],
+        "firstAid": [],
+        "urgencyLabel": "Seek Vet Care",
+        "requiresVeterinarian": true,
+        "environmentalFactors": [
+          "High ambient humidity",
+          "Vector insect exposure in pasture"
+        ],
+        "explanation": "Acute vesicular lesions and pyrexia strongly indicate vesicular viral infection. High transmissibility risk.",
+        "modelVersion": "animal-health-v1"
+      },
+      "preliminaryCondition": "Foot and Mouth Disease (FMD)",
+      "severity": "HIGH",
+      "location": {
+        "type": "Point",
+        "coordinates": [
+          73.8567,
+          18.5204
+        ]
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T19:41:34.683Z",
+      "updatedAt": "2026-09-27T19:41:34.683Z"
+    },
+    {
+      "id": "CASE-2026-593506",
+      "caseId": "CASE-2026-593506",
+      "animalId": "ANM-2026-527630",
+      "animalTag": "TAG-974811",
+      "farmerId": "6ab9718ebe4742e014fab73a",
+      "farmerUserId": "6ab9718ebe4742e014fab739",
+      "farmerPhone": "9830788760",
+      "assignedVetId": null,
+      "vetId": null,
+      "status": "VET_REQUIRED",
+      "majorSymptoms": [
+        "Fever",
+        "Blisters in mouth",
+        "Excessive drooling",
+        "Limping on hoof"
+      ],
+      "symptoms": [
+        "Fever",
+        "Blisters in mouth",
+        "Excessive drooling",
+        "Limping on hoof"
+      ],
+      "additionalSymptoms": "Cow is salivating heavily and has vesicles on tongue with high temperature.",
+      "description": "Cow is salivating heavily and has vesicles on tongue with high temperature.",
+      "photoUrls": [
+        "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      ],
+      "images": [
+        "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      ],
+      "aiAnalysis": {
+        "riskLevel": "HIGH",
+        "severity": "HIGH",
+        "primaryCondition": "Foot and Mouth Disease (FMD)",
+        "possibleConditions": [
+          "Foot and Mouth Disease (FMD)",
+          "Bovine Vesicular Stomatitis",
+          "Malignant Catarrhal Fever"
+        ],
+        "confidence": 0.89,
+        "recommendedTests": [
+          "RT-PCR for FMDV",
+          "ELISA for Viral Antigen (3ABC ELISA)",
+          "Epithelial Lesion Biopsy"
+        ],
+        "firstAid": [],
+        "urgencyLabel": "Seek Vet Care",
+        "requiresVeterinarian": true,
+        "environmentalFactors": [
+          "High ambient humidity",
+          "Vector insect exposure in pasture"
+        ],
+        "explanation": "Acute vesicular lesions and pyrexia strongly indicate vesicular viral infection. High transmissibility risk.",
+        "modelVersion": "animal-health-v1"
+      },
+      "preliminaryCondition": "Foot and Mouth Disease (FMD)",
+      "severity": "HIGH",
+      "location": {
+        "type": "Point",
+        "coordinates": [
+          73.8567,
+          18.5204
+        ]
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T19:42:07.084Z",
+      "updatedAt": "2026-09-27T19:42:07.084Z"
     }
   ],
   "appointments": [
@@ -1109,7 +1336,7 @@
     },
     {
       "id": "OBK-2026-669607",
-      "outbreakId": "OBK-2026-468001",
+      "outbreakId": "OBK-2026-739007",
       "diseaseCategory": "General Bovine Health",
       "region": "Pune, Maharashtra",
       "district": "Pune",
@@ -1137,7 +1364,7 @@
       },
       "forecastSnapshot": [
         {
-          "timestamp": "2026-09-27T22:17:17.488Z",
+          "timestamp": "2026-09-27T22:59:31.650Z",
           "temp": 29,
           "humidity": 70,
           "rain": 0.5,
@@ -1145,7 +1372,7 @@
           "description": "light rain shower"
         },
         {
-          "timestamp": "2026-09-28T01:17:17.488Z",
+          "timestamp": "2026-09-28T01:59:31.650Z",
           "temp": 27.5,
           "humidity": 75,
           "rain": 2.1,
@@ -1153,7 +1380,7 @@
           "description": "moderate rain"
         },
         {
-          "timestamp": "2026-09-28T07:17:17.488Z",
+          "timestamp": "2026-09-28T07:59:31.650Z",
           "temp": 25,
           "humidity": 82,
           "rain": 0,
@@ -1161,7 +1388,7 @@
           "description": "overcast"
         },
         {
-          "timestamp": "2026-09-28T19:17:17.488Z",
+          "timestamp": "2026-09-28T19:59:31.650Z",
           "temp": 26.5,
           "humidity": 78,
           "rain": 1.2,
@@ -1170,7 +1397,72 @@
         }
       ],
       "modelVersion": "outbreak-risk-v1.2",
-      "updatedAt": "2026-09-27T19:17:17.955Z"
+      "updatedAt": "2026-09-27T19:59:32.037Z"
+    },
+    {
+      "id": "OBK-2026-509826",
+      "outbreakId": "OBK-2026-216048",
+      "diseaseCategory": "Foot and Mouth Disease (FMD)",
+      "region": "Pune, Maharashtra",
+      "district": "Pune",
+      "state": "Maharashtra",
+      "location": {
+        "type": "Point",
+        "coordinates": [
+          73.8567,
+          18.5204
+        ]
+      },
+      "caseCount": 2,
+      "timeWindowDays": 30,
+      "observedCaseScore": 20,
+      "environmentalScore": 20,
+      "combinedRiskScore": 40,
+      "riskCategory": "MODERATE",
+      "statusWording": "Environmental conditions associated with elevated risk",
+      "recommendation": "Monitor herd hydration, body temperature, and report early fever to dispensary.",
+      "weatherSnapshot": {
+        "temp": 28.5,
+        "humidity": 68,
+        "condition": "Humid/Scattered Clouds",
+        "rain": 0
+      },
+      "forecastSnapshot": [
+        {
+          "timestamp": "2026-09-27T22:59:31.650Z",
+          "temp": 29,
+          "humidity": 70,
+          "rain": 0.5,
+          "condition": "Rain",
+          "description": "light rain shower"
+        },
+        {
+          "timestamp": "2026-09-28T01:59:31.650Z",
+          "temp": 27.5,
+          "humidity": 75,
+          "rain": 2.1,
+          "condition": "Rain",
+          "description": "moderate rain"
+        },
+        {
+          "timestamp": "2026-09-28T07:59:31.650Z",
+          "temp": 25,
+          "humidity": 82,
+          "rain": 0,
+          "condition": "Clouds",
+          "description": "overcast"
+        },
+        {
+          "timestamp": "2026-09-28T19:59:31.650Z",
+          "temp": 26.5,
+          "humidity": 78,
+          "rain": 1.2,
+          "condition": "Rain",
+          "description": "monsoon showers"
+        }
+      ],
+      "modelVersion": "outbreak-risk-v1.2",
+      "updatedAt": "2026-09-27T19:59:32.038Z"
     }
   ],
   "broadcasts": [

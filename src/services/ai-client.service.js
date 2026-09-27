@@ -511,6 +511,219 @@ class AIClientService {
       isPreliminary: true
     };
   }
+
+  /**
+   * Strictly confidential doctor-only AI assistant with targeted pharmacological regimens & dosages
+   * @param {Object} payload
+   */
+  getDoctorClinicalAssist(payload) {
+    const analysis = this.fallbackAnalysis(payload);
+    const condition = (analysis.primary_condition || '').toLowerCase();
+
+    let suggestedMedications = [];
+
+    if (condition.includes('foot and mouth') || condition.includes('fmd')) {
+      suggestedMedications = [
+        {
+          name: 'Ceftiofur Sodium (Naxcel / Excenel)',
+          activeSalt: 'Ceftiofur Sodium (3rd gen Cephalosporin)',
+          dosage: '1.1 to 2.2 mg/kg IM (approx 10-15 ml for 400kg cow)',
+          frequency: 'Once Daily (IM)',
+          durationDays: 3,
+          withdrawalMilkDays: 0,
+          withdrawalMeatDays: 4,
+          indication: 'Prevent secondary bacterial infection of mucosal & podal lesions'
+        },
+        {
+          name: 'Meloxicam Injection (Melonex)',
+          activeSalt: 'Meloxicam 5mg/ml (COX-2 Selective NSAID)',
+          dosage: '0.5 mg/kg IM (approx 15 ml for 300kg cattle)',
+          frequency: 'Once Daily (IM / SC)',
+          durationDays: 3,
+          withdrawalMilkDays: 5,
+          withdrawalMeatDays: 15,
+          indication: 'Alleviate severe pain from mouth/foot vesicles, control pyrexia'
+        },
+        {
+          name: 'Boro-Glycerine 10%',
+          activeSalt: 'Borax in Glycerine IP',
+          dosage: 'Topical application to tongue and oral mucosa',
+          frequency: '3 times daily after KMNO4 rinse',
+          durationDays: 5,
+          withdrawalMilkDays: 0,
+          withdrawalMeatDays: 0,
+          indication: 'Soothe ulcers and promote mucosal healing'
+        }
+      ];
+    } else if (condition.includes('lumpy skin') || condition.includes('lsd')) {
+      suggestedMedications = [
+        {
+          name: 'Enrofloxacin Injection (Baytril 10%)',
+          activeSalt: 'Enrofloxacin (Fluoroquinolone)',
+          dosage: '5 mg/kg IM / SC (approx 15 ml per 300kg)',
+          frequency: 'Once Daily',
+          durationDays: 4,
+          withdrawalMilkDays: 3,
+          withdrawalMeatDays: 14,
+          indication: 'Prevent secondary cutaneous and pulmonary bacterial infection'
+        },
+        {
+          name: 'Ketoprofen Injection',
+          activeSalt: 'Ketoprofen 100 mg/ml (NSAID)',
+          dosage: '3 mg/kg IM / IV (approx 9 ml for 300kg)',
+          frequency: 'Once Daily',
+          durationDays: 3,
+          withdrawalMilkDays: 0,
+          withdrawalMeatDays: 4,
+          indication: 'Control high fever, subcutaneous edema, and cutaneous nodule inflammation'
+        },
+        {
+          name: 'Ivermectin 1%',
+          activeSalt: 'Ivermectin Injection',
+          dosage: '1 ml per 50 kg Subcutaneously (SC only)',
+          frequency: 'Single dose',
+          durationDays: 1,
+          withdrawalMilkDays: 28,
+          withdrawalMeatDays: 28,
+          indication: 'Eradicate screw-worm flies, ticks, and secondary myiasis maggots'
+        }
+      ];
+    } else if (condition.includes('respiratory') || condition.includes('pneumonia') || condition.includes('brdc') || condition.includes('pasteurell')) {
+      suggestedMedications = [
+        {
+          name: 'Florfenicol 300mg/ml (Nuflor)',
+          activeSalt: 'Florfenicol',
+          dosage: '20 mg/kg IM in neck (repeat after 48h) or 40 mg/kg SC once',
+          frequency: 'Single SC or 2 IM doses 48h apart',
+          durationDays: 3,
+          withdrawalMilkDays: 0,
+          withdrawalMeatDays: 28,
+          indication: 'Broad spectrum therapeutic bactericidal for Pasteurella & Mannheimia'
+        },
+        {
+          name: 'Flunixin Meglumine Injection',
+          activeSalt: 'Flunixin Meglumine (Potent Antipyretic NSAID)',
+          dosage: '2.2 mg/kg IV / IM (approx 13 ml for 300kg)',
+          frequency: 'Once Daily',
+          durationDays: 3,
+          withdrawalMilkDays: 4,
+          withdrawalMeatDays: 7,
+          indication: 'Rapid defervescence (fever drop) and relief of acute dyspnea/lung inflammation'
+        },
+        {
+          name: 'Bromhexine HCl (Bisolvon Vet)',
+          activeSalt: 'Bromhexine Mucolytic',
+          dosage: '0.5 mg/kg IM',
+          frequency: 'Twice Daily',
+          durationDays: 4,
+          withdrawalMilkDays: 0,
+          withdrawalMeatDays: 3,
+          indication: 'Break down thick tracheal and bronchial mucous exudate'
+        }
+      ];
+    } else if (condition.includes('mastitis')) {
+      suggestedMedications = [
+        {
+          name: 'Cefquinome Sulfate (Cobactan LC)',
+          activeSalt: 'Cefquinome 4th Gen Cephalosporin',
+          dosage: '1 intramammary syringe per affected quarter after complete strip-out',
+          frequency: 'Every 12 hours for 3 infusions',
+          durationDays: 2,
+          withdrawalMilkDays: 5,
+          withdrawalMeatDays: 3,
+          indication: 'Intramammary broad-spectrum eradication of coliforms & streptococci'
+        },
+        {
+          name: 'Meloxicam Injection',
+          activeSalt: 'Meloxicam NSAID',
+          dosage: '0.5 mg/kg IM',
+          frequency: 'Once Daily',
+          durationDays: 3,
+          withdrawalMilkDays: 5,
+          withdrawalMeatDays: 15,
+          indication: 'Reduce severe udder swelling and restore vascular permeability'
+        }
+      ];
+    } else if (condition.includes('bloat') || condition.includes('tympany')) {
+      suggestedMedications = [
+        {
+          name: 'Simethicone + Dill Oil Emulsion (Tympanol / Bloatosil)',
+          activeSalt: 'Simethicone with Essential Oils',
+          dosage: '100 ml orally with 500 ml lukewarm water or groundnut oil',
+          frequency: 'Single oral drench, repeat after 4h if needed',
+          durationDays: 1,
+          withdrawalMilkDays: 0,
+          withdrawalMeatDays: 0,
+          indication: 'Defoaming surfactant to break frothy bloat gas bubbles'
+        },
+        {
+          name: 'Trocar and Cannula / Stomach Tube Emergency Aspiration',
+          activeSalt: 'Physical decompression',
+          dosage: 'Immediate left paralumbar puncture if asphyxiation is imminent',
+          frequency: 'Emergency immediate',
+          durationDays: 1,
+          withdrawalMilkDays: 0,
+          withdrawalMeatDays: 0,
+          indication: 'Relieve ruminal pressure against diaphragm'
+        }
+      ];
+    } else {
+      suggestedMedications = [
+        {
+          name: 'Oxytetracycline 200mg/ml Long Acting',
+          activeSalt: 'Oxytetracycline LA',
+          dosage: '20 mg/kg Deep IM in neck',
+          frequency: 'Single injection, repeat after 72h if required',
+          durationDays: 3,
+          withdrawalMilkDays: 7,
+          withdrawalMeatDays: 21,
+          indication: 'Broad spectrum therapeutic coverage for acute systemic bacterial infection'
+        },
+        {
+          name: 'Meloxicam Injection',
+          activeSalt: 'Meloxicam NSAID',
+          dosage: '0.5 mg/kg IM',
+          frequency: 'Once Daily',
+          durationDays: 3,
+          withdrawalMilkDays: 5,
+          withdrawalMeatDays: 15,
+          indication: 'Anti-inflammatory and antipyretic relief'
+        },
+        {
+          name: 'B-Complex with Liver Extract (Belamyl / Tribivet)',
+          activeSalt: 'Thiamine, Riboflavin, Pyridoxine, Niacinamide, Cyanocobalamin',
+          dosage: '10 ml IM',
+          frequency: 'Once Daily',
+          durationDays: 3,
+          withdrawalMilkDays: 0,
+          withdrawalMeatDays: 0,
+          indication: 'Stimulate depressed appetite and assist ruminal microbial repopulation'
+        }
+      ];
+    }
+
+    return {
+      doctorEyesOnly: true,
+      confidentialityNotice: 'RESTRICTED CLINICAL DECISION SUPPORT — FOR LICENSED VETERINARY PRACTITIONERS ONLY',
+      primaryCondition: {
+        name: analysis.primary_condition,
+        probability: analysis.confidence,
+        severity: analysis.severity,
+        urgency: analysis.urgency_label
+      },
+      explanation: analysis.explanation,
+      differentialDiagnoses: (analysis.possible_conditions || []).map((c, i) => ({
+        condition: typeof c === 'string' ? c : (c.name || 'Condition'),
+        probability: i === 0 ? analysis.confidence : Math.max(0.1, Number((analysis.confidence * 0.4 / (i + 1)).toFixed(2))),
+        severity: analysis.severity
+      })),
+      suggestedMedications,
+      recommendedTests: (analysis.recommended_tests || []).map(t => ({
+        testName: t,
+        priority: analysis.severity === 'CRITICAL' ? 'EMERGENCY' : (analysis.severity === 'HIGH' ? 'HIGH' : 'ROUTINE')
+      }))
+    };
+  }
 }
 
 module.exports = new AIClientService();

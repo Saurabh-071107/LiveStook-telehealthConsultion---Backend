@@ -7,6 +7,7 @@ const mongo = require('../db/mongo');
 const { authenticate, requireRole } = require('../middleware/auth');
 const agoraService = require('../services/agora.service');
 const notificationService = require('../services/notification.service');
+const aiClientService = require('../services/ai-client.service');
 
 // POST /api/consultations/start (Only Vet can start consultation, 5-minute rule enforced)
 router.post('/start', authenticate, requireRole('vet', 'VETERINARIAN', 'government_admin', 'ADMIN'), async (req, res) => {
@@ -241,6 +242,102 @@ router.post('/:id/end', authenticate, async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to end consultation.' });
+  }
+});
+
+// POST /api/consultations/vet-ai-assist (Strictly confidential Doctor-Only Clinical Decision Support)
+router.post('/vet-ai-assist', authenticate, requireRole('vet', 'VETERINARIAN', 'government_admin', 'ADMIN'), async (req, res) => {
+  try {
+    const {
+      caseId,
+      appointmentId,
+      symptoms = [],
+      additionalInfo = '',
+      type,
+      species = 'Cow',
+      animalType = 'Cattle'
+    } = req.body;
+
+    let payloadSymptoms = Array.isArray(symptoms) ? symptoms : [symptoms];
+    let payloadSpecies = species || animalType || 'Cow';
+    let payloadAdditional = additionalInfo;
+
+    // If appointmentId or caseId provided, supplement with intake data
+    if (appointmentId) {
+      const apt = db.findById('appointments', appointmentId);
+      if (apt) {
+        if (apt.symptoms && Array.isArray(apt.symptoms) && apt.symptoms.length > 0) {
+          payloadSymptoms = [...new Set([...payloadSymptoms, ...apt.symptoms])];
+        }
+        if (apt.species) payloadSpecies = apt.species;
+        if (apt.description) payloadAdditional = `${payloadAdditional} ${apt.description}`.trim();
+      }
+    }
+
+    if (caseId) {
+      const c = db.findById('cases', caseId) || db.findAll('cases', item => item.caseId === caseId)[0];
+      if (c) {
+        if (c.symptoms && Array.isArray(c.symptoms)) {
+          payloadSymptoms = [...new Set([...payloadSymptoms, ...c.symptoms])];
+        }
+        if (c.species) payloadSpecies = c.species;
+        if (c.description) payloadAdditional = `${payloadAdditional} ${c.description}`.trim();
+      }
+    }
+
+    const aiPayload = {
+      major_symptoms: payloadSymptoms,
+      additional_symptoms: payloadAdditional,
+      type: payloadSpecies,
+      species: payloadSpecies
+    };
+
+    const clinicalAssist = aiClientService.getDoctorClinicalAssist(aiPayload);
+    return res.json({
+      success: true,
+      ...clinicalAssist
+    });
+  } catch (err) {
+    console.error('Vet AI Assist error:', err);
+    return res.status(500).json({ error: 'Failed to generate clinical decision support.' });
+  }
+});
+
+// GET /api/consultations/:id/vet-ai-assist (Fetch clinical assist for a consultation/case)
+router.get('/:id/vet-ai-assist', authenticate, requireRole('vet', 'VETERINARIAN', 'government_admin', 'ADMIN'), async (req, res) => {
+  try {
+    const id = req.params.id;
+    let apt = db.findById('appointments', id) || db.findAll('appointments', a => a.id === id || a.callRoomId === id)[0];
+    let targetCase = db.findById('cases', id) || db.findAll('cases', c => c.caseId === id || c.id === id)[0];
+
+    const symptoms = [];
+    let species = 'Cow';
+    let additional = '';
+
+    if (apt) {
+      if (apt.symptoms) symptoms.push(...(Array.isArray(apt.symptoms) ? apt.symptoms : [apt.symptoms]));
+      if (apt.species) species = apt.species;
+      if (apt.description) additional += ' ' + apt.description;
+    }
+    if (targetCase) {
+      if (targetCase.symptoms) symptoms.push(...(Array.isArray(targetCase.symptoms) ? targetCase.symptoms : [targetCase.symptoms]));
+      if (targetCase.species) species = targetCase.species;
+      if (targetCase.description) additional += ' ' + targetCase.description;
+    }
+
+    const clinicalAssist = aiClientService.getDoctorClinicalAssist({
+      major_symptoms: symptoms,
+      additional_symptoms: additional.trim(),
+      type: species,
+      species
+    });
+
+    return res.json({
+      success: true,
+      ...clinicalAssist
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to retrieve clinical decision support.' });
   }
 });
 

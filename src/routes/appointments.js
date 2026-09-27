@@ -100,7 +100,7 @@ router.post('/', authenticate, (req, res) => {
   }
 });
 
-// POST /api/appointments/queue-call (Instant Queue Triage Registration)
+// POST /api/appointments/queue-call (Instant Queue Triage Registration with Single-Queue Enforcement)
 router.post('/queue-call', authenticate, (req, res) => {
   try {
     const {
@@ -119,10 +119,42 @@ router.post('/queue-call', authenticate, (req, res) => {
       species,
     } = req.body;
     const targetVetId = vetId || doctorId || 'usr-vet-1';
+
+    // 1. Single-Queue Enforcement: Check if farmer is already in a queue
+    const existingActiveQueue = db.findAll('appointments', a =>
+      a.farmerId === req.user.id &&
+      a.status === 'in_queue' &&
+      (a.callStatus === 'waiting' || a.callStatus === 'ringing' || a.callStatus === 'active')
+    )[0];
+
+    if (existingActiveQueue) {
+      return res.status(400).json({
+        error: `You are already in the queue for ${existingActiveQueue.vetName} with Token ${existingActiveQueue.queueToken || 'Q-01'}. You cannot join multiple doctor queues simultaneously. Please leave your current queue first.`,
+        existingQueue: existingActiveQueue
+      });
+    }
+
     const vet = db.findById('users', targetVetId) || db.findAll('users', u => u.role === 'vet')[0];
     const callRoomId = `agora-${uuidv4().substring(0, 10)}`;
     const parsedSymptoms = Array.isArray(symptoms) ? symptoms : (symptoms ? [symptoms] : []);
     const parsedPhotos = Array.isArray(photoUrls) ? photoUrls : (Array.isArray(photos) ? photos : []);
+
+    // 2. Daily Sequential Token Generation per Vet (Q-01, Q-02...)
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const todayVetQueue = db.findAll('appointments', a =>
+      a.vetId === targetVetId &&
+      new Date(a.createdAt || a.scheduledAt || Date.now()) >= todayMidnight
+    );
+    const tokenNumber = `Q-${String(todayVetQueue.length + 1).padStart(2, '0')}`;
+
+    // 3. Calculate patients ahead and estimated wait time
+    const activeAhead = db.findAll('appointments', a =>
+      a.vetId === targetVetId &&
+      a.status === 'in_queue' &&
+      a.callStatus === 'waiting'
+    ).length;
+    const estimatedMinutes = (activeAhead + 1) * 3;
 
     const newQueueApt = {
       id: `queue-${uuidv4().substring(0, 8)}`,
@@ -146,6 +178,10 @@ router.post('/queue-call', authenticate, (req, res) => {
       type: 'video_call',
       status: 'in_queue',
       callStatus: 'waiting', // waiting | ringing | active | completed | declined
+      queueToken: tokenNumber,
+      tokenNumber: tokenNumber,
+      queuePosition: activeAhead + 1,
+      estimatedWaitMinutes: estimatedMinutes,
       callRoomId,
       agoraChannel: callRoomId,
       scheduledAt: new Date().toISOString(),
@@ -160,6 +196,124 @@ router.post('/queue-call', authenticate, (req, res) => {
     return res.status(201).json(newQueueApt);
   } catch (err) {
     return res.status(500).json({ error: 'Failed to create queue appointment.' });
+  }
+});
+
+// GET /api/appointments/queue-status (Live Queue Token, currently serving, and estimated wait)
+router.get('/queue-status', authenticate, (req, res) => {
+  try {
+    const activeQueue = db.findAll('appointments', a =>
+      a.farmerId === req.user.id &&
+      a.status === 'in_queue' &&
+      (a.callStatus === 'waiting' || a.callStatus === 'ringing' || a.callStatus === 'active')
+    )[0];
+
+    if (!activeQueue) {
+      return res.json({ inQueue: false });
+    }
+
+    // Find currently serving token for this vet
+    const vetRingingOrActive = db.findAll('appointments', a =>
+      a.vetId === activeQueue.vetId &&
+      (a.callStatus === 'active' || a.callStatus === 'ringing')
+    )[0];
+
+    const waitingList = db.findAll('appointments', a =>
+      a.vetId === activeQueue.vetId &&
+      a.status === 'in_queue' &&
+      a.callStatus === 'waiting'
+    ).sort((x, y) => new Date(x.createdAt) - new Date(y.createdAt));
+
+    const currentlyServing = vetRingingOrActive
+      ? (vetRingingOrActive.queueToken || 'Q-01')
+      : (waitingList[0] ? (waitingList[0].queueToken || 'Q-01') : (activeQueue.queueToken || 'Q-01'));
+
+    const myIndex = waitingList.findIndex(a => a.id === activeQueue.id);
+    const position = myIndex >= 0 ? myIndex : 0;
+    const estimatedWaitMinutes = (position + 1) * 3;
+
+    return res.json({
+      inQueue: true,
+      appointment: activeQueue,
+      token: activeQueue.queueToken || 'Q-01',
+      tokenNumber: activeQueue.queueToken || 'Q-01',
+      currentlyServing: currentlyServing,
+      position: position,
+      patientsAhead: position,
+      estimatedWaitMinutes: estimatedWaitMinutes,
+      vetName: activeQueue.vetName,
+      hospitalClinic: activeQueue.hospitalClinic,
+      animalName: activeQueue.animalName,
+      species: activeQueue.species,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to retrieve queue status.' });
+  }
+});
+
+// POST /api/appointments/:id/leave-queue (Farmer leaves the queue)
+router.post('/:id/leave-queue', authenticate, (req, res) => {
+  try {
+    const apt = db.findById('appointments', req.params.id);
+    if (!apt) return res.status(404).json({ error: 'Queue appointment not found.' });
+
+    if (apt.farmerId !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized to leave this queue.' });
+    }
+
+    const updated = db.updateById('appointments', req.params.id, {
+      status: 'cancelled',
+      callStatus: 'cancelled',
+      cancelledAt: new Date().toISOString()
+    });
+
+    return res.json({
+      success: true,
+      message: 'Successfully left the consultation queue.',
+      appointment: updated
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to leave queue.' });
+  }
+});
+
+// GET /api/appointments/vet-queue (Vet views strictly their assigned queued patients)
+router.get('/vet-queue', authenticate, (req, res) => {
+  try {
+    const vetId = req.user.id;
+    const queueList = db.findAll('appointments', a =>
+      (a.vetId === vetId || !a.vetId) &&
+      a.status === 'in_queue' &&
+      (a.callStatus === 'waiting' || a.callStatus === 'ringing' || a.callStatus === 'active')
+    ).sort((x, y) => new Date(x.createdAt) - new Date(y.createdAt));
+
+    return res.json(queueList);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to retrieve vet queue.' });
+  }
+});
+
+// POST /api/appointments/:id/accept-appointment (Vet accepts appointment & issues digital slip number)
+router.post('/:id/accept-appointment', authenticate, (req, res) => {
+  try {
+    const apt = db.findById('appointments', req.params.id);
+    if (!apt) return res.status(404).json({ error: 'Appointment not found.' });
+
+    const appointmentNumber = `APT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const updated = db.updateById('appointments', req.params.id, {
+      status: 'accepted',
+      appointmentNumber,
+      acceptedAt: new Date().toISOString()
+    });
+
+    return res.json({
+      success: true,
+      message: 'Appointment accepted by doctor.',
+      appointment: updated,
+      appointmentNumber
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to accept appointment.' });
   }
 });
 
@@ -200,7 +354,6 @@ router.post('/:id/start-call', authenticate, (req, res) => {
       const scheduledTime = new Date(existing.scheduledAt).getTime();
       const now = Date.now();
       const earliestAllowed = scheduledTime - 5 * 60 * 1000; // 5 mins before
-      const latestAllowed = scheduledTime + 3 * 60 * 60 * 1000; // 3 hours window
 
       if (now < earliestAllowed) {
         const minsRemaining = Math.ceil((earliestAllowed - now) / 60000);
@@ -255,9 +408,14 @@ router.post('/:id/accept-call', authenticate, (req, res) => {
   }
 });
 
-// POST /api/appointments/:id/end-call (Either party ends call)
+// POST /api/appointments/:id/end-call (STRICT RULE: Only Doctor can terminate clinical consultation)
 router.post('/:id/end-call', authenticate, (req, res) => {
   try {
+    const userRole = (req.user.role || '').toLowerCase();
+    if (userRole !== 'vet' && userRole !== 'veterinarian' && userRole !== 'government_admin' && userRole !== 'admin') {
+      return res.status(403).json({ error: 'Strict Rule: Only the attending veterinarian can conclude the clinical consultation and finalize prescriptions.' });
+    }
+
     const { callNotes, callDurationMinutes } = req.body;
     const existing = db.findById('appointments', req.params.id);
     if (!existing) return res.status(404).json({ error: 'Appointment not found.' });
@@ -273,7 +431,7 @@ router.post('/:id/end-call', authenticate, (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Call concluded.',
+      message: 'Call concluded and clinical record archived.',
       appointment: updated
     });
   } catch (err) {

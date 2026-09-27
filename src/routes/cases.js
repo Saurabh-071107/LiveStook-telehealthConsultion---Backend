@@ -372,4 +372,108 @@ router.post('/:id/reject', authenticate, requireRole('vet', 'VETERINARIAN', 'gov
   }
 });
 
+// POST /api/cases/:id/dispatch-emergency (Government Admin Dispatches Emergency Vet Response)
+router.post('/:id/dispatch-emergency', authenticate, requireRole('government_admin', 'ADMIN', 'admin'), async (req, res) => {
+  try {
+    const caseId = req.params.id;
+    const { assignedVetId, notes = 'High-severity emergency response dispatched by Animal Husbandry Command Centre.' } = req.body;
+
+    let targetCase = db.findById('cases', caseId) || db.findAll('cases', c => c.caseId === caseId)[0];
+    if (!targetCase && mongo.isConnected) {
+      const doc = await Case.findOne({ caseId }) || await Case.findById(caseId);
+      if (doc) targetCase = doc.toObject();
+    }
+
+    if (!targetCase) {
+      return res.status(404).json({ error: 'Case not found for emergency dispatch.' });
+    }
+
+    // Pick veterinarian
+    let vet = null;
+    if (assignedVetId) {
+      vet = db.findById('users', assignedVetId);
+    }
+    if (!vet) {
+      // Find on-duty or available vet
+      vet = db.findAll('users', u => (u.role === 'vet' || u.role === 'veterinarian') && u.availableForCalls)[0] ||
+            db.findAll('users', u => u.role === 'vet' || u.role === 'veterinarian')[0];
+    }
+
+    const resolvedVetId = vet ? vet.id : 'usr-vet-1';
+    const resolvedVetName = vet ? vet.name : 'Dr. Anand Sharma';
+
+    // 1. Update Case
+    const caseUpdates = {
+      status: 'EMERGENCY_DISPATCHED',
+      severity: 'CRITICAL',
+      isEmergency: true,
+      emergencyDispatchedAt: new Date().toISOString(),
+      dispatchedBy: req.user.name || 'Government Health Officer',
+      assignedVetId: resolvedVetId,
+      vetName: resolvedVetName,
+      adminNotes: notes
+    };
+
+    if (mongo.isConnected) {
+      await Case.findOneAndUpdate({ caseId: targetCase.caseId }, caseUpdates);
+    }
+    db.updateById('cases', targetCase.id, caseUpdates);
+
+    // 2. Create High-Priority Emergency Appointment
+    const emergencyAptId = `apt-emg-${uuidv4().substring(0, 8)}`;
+    const emergencyApt = {
+      id: emergencyAptId,
+      caseId: targetCase.caseId,
+      farmerId: targetCase.farmerId,
+      farmerName: targetCase.farmerName || 'Livestock Owner',
+      farmerPhone: targetCase.farmerPhone || '+91 98765 43210',
+      village: targetCase.village || targetCase.district || 'Rural Center',
+      vetId: resolvedVetId,
+      vetName: resolvedVetName,
+      animalId: targetCase.animalId || 'SYS-ANML-EMG',
+      animalName: targetCase.animalName || 'Cattle',
+      animalTag: targetCase.animalTag || targetCase.animalId || 'MH-EMG-01',
+      species: targetCase.species || 'Cattle',
+      scheduledAt: new Date().toISOString(),
+      scheduledTime: 'IMMEDIATE EMERGENCY',
+      appointmentTimeFormatted: 'Immediate Priority Dispatch',
+      type: 'emergency_call',
+      status: 'in_queue',
+      callStatus: 'waiting',
+      queueToken: 'EMG-01',
+      isEmergency: true,
+      priority: 'EMERGENCY',
+      callRoomId: `agora-emg-${uuidv4().substring(0, 8)}`,
+      symptoms: targetCase.symptoms || ['Acute Respiratory Distress', 'High Pyrexia'],
+      description: notes,
+      createdAt: new Date().toISOString()
+    };
+
+    db.create('appointments', emergencyApt);
+
+    // 3. Trigger Urgent Vet Notification
+    notificationService.sendNotification({
+      userIds: [resolvedVetId],
+      title: '🚨 CRITICAL EMERGENCY DISPATCH',
+      message: `Immediate response mandated for ${targetCase.caseId} (${targetCase.species || 'Livestock'}). Tap to initiate emergency consultation.`,
+      data: {
+        type: 'EMERGENCY_DISPATCH',
+        caseId: targetCase.caseId,
+        appointmentId: emergencyAptId,
+        priority: 'CRITICAL'
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Emergency response dispatched to ${resolvedVetName}. Priority telecommunication channel opened.`,
+      case: { ...targetCase, ...caseUpdates },
+      appointment: emergencyApt
+    });
+  } catch (err) {
+    console.error('Dispatch emergency error:', err);
+    return res.status(500).json({ error: 'Failed to dispatch emergency response.' });
+  }
+});
+
 module.exports = router;
