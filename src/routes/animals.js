@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
-const { Animal, AnimalImage } = require('../models');
+const { Animal, AnimalImage, Farmer, Case, Vaccination } = require('../models');
 const { isConnected } = require('../db/mongo');
 const { authenticate, requireRole } = require('../middleware/auth');
 const medicalReportService = require('../services/medical-report.service');
@@ -14,19 +14,29 @@ function generateAnimalId() {
   return `ANM-${year}-${seq}`;
 }
 
-// GET /api/animals (Filtered by owner if farmer, enriched with Doctor & AI treatment status)
+// GET /api/animals (Filtered strictly by authenticated farmer, enriched with Doctor & AI treatment status)
 router.get('/', authenticate, async (req, res) => {
   try {
     let animals = [];
+    const userId = req.user._id || req.user.id;
 
     if (isConnected) {
-      const query = req.user.role === 'FARMER' || req.user.role === 'farmer' 
-        ? { ownerId: req.user._id || req.user.id } 
-        : {};
-      animals = await Animal.find(query).lean();
+      let query = {};
+      if (req.user.role === 'FARMER' || req.user.role === 'farmer') {
+        const farmerDoc = await Farmer.findOne({ userId }).lean();
+        const farmerProfileId = farmerDoc ? farmerDoc._id : null;
+        query = {
+          $or: [
+            { farmerId: farmerProfileId },
+            { ownerId: userId },
+            { farmerUserId: userId }
+          ].filter(Boolean)
+        };
+      }
+      animals = await Animal.find(query).sort({ createdAt: -1 }).lean();
     } else {
       if (req.user.role === 'farmer' || req.user.role === 'FARMER') {
-        animals = db.findAll('animals', a => a.ownerId === req.user.id);
+        animals = db.findAll('animals', a => a.ownerId === userId || a.farmerUserId === userId);
       } else {
         animals = db.findAll('animals');
       }
@@ -39,7 +49,7 @@ router.get('/', authenticate, async (req, res) => {
       const animalId = animal.animalId || animal.id;
       const activeCase = allCases.find(c => (c.animalId === animalId || c.animalTag === animalTag) && c.status !== 'resolved' && c.status !== 'CLOSED');
 
-      let dynamicStatus = animal.healthStatus || 'Healthy';
+      let dynamicStatus = animal.healthStatus || 'HEALTHY';
       let hasOngoingTreatment = false;
       let treatmentInfo = null;
 
@@ -65,7 +75,7 @@ router.get('/', authenticate, async (req, res) => {
 
       return {
         ...animal,
-        id: animal.animalId || animal.id,
+        id: animal.animalId || animal._id?.toString() || animal.id,
         tagNumber: animal.earTagId || animal.tagNumber,
         earTagId: animal.earTagId || animal.tagNumber,
         species: animal.type || animal.species,
@@ -83,23 +93,61 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// GET /api/animals/dashboard-summary
-router.get('/dashboard-summary', authenticate, (req, res) => {
+// GET /api/animals/dashboard-summary (Strict real counts: 0 livestock, 0 appointments, 0 vaccinations for new users)
+router.get('/dashboard-summary', authenticate, async (req, res) => {
   try {
-    const farmerId = req.user.id || req.user._id;
-    const myAnimals = db.findAll('animals', a => a.ownerId === farmerId);
-    const myAppointments = db.findAll('appointments', a => a.farmerId === farmerId);
-    const schedules = db.findAll('vaccinationSchedules');
+    const userId = req.user._id || req.user.id;
+    let totalAnimals = 0;
+    let appointmentsToday = 0;
+    let vaccinationsDue = 0;
 
-    const district = (req.user.district || 'Pune').toLowerCase();
-    const activeSchedules = schedules.filter(s => 
-      s.district && s.district.toLowerCase() === district && s.status === 'active'
-    );
+    if (isConnected) {
+      const farmerDoc = await Farmer.findOne({ userId }).lean();
+      const farmerProfileId = farmerDoc ? farmerDoc._id : null;
+      const animalQuery = {
+        $or: [
+          { farmerId: farmerProfileId },
+          { ownerId: userId },
+          { farmerUserId: userId }
+        ].filter(Boolean)
+      };
+
+      totalAnimals = await Animal.countDocuments(animalQuery);
+
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const apptQuery = {
+        createdAt: { $gte: startOfDay },
+        $or: [
+          { farmerId: farmerProfileId },
+          { farmerId: userId },
+          { userId: userId }
+        ].filter(Boolean)
+      };
+      appointmentsToday = await Case.countDocuments({
+        ...apptQuery,
+        status: { $in: ['SCHEDULED', 'IN_CONSULTATION', 'ACTIVE'] }
+      });
+
+      vaccinationsDue = await Vaccination.countDocuments({
+        $or: [
+          { farmerId: farmerProfileId },
+          { farmerId: userId }
+        ].filter(Boolean),
+        status: 'DUE'
+      });
+    } else {
+      const myAnimals = db.findAll('animals', a => a.ownerId === userId || a.farmerUserId === userId);
+      totalAnimals = myAnimals.length;
+      const myAppointments = db.findAll('appointments', a => a.farmerId === userId);
+      appointmentsToday = myAppointments.length;
+      vaccinationsDue = 0;
+    }
 
     return res.json({
-      totalAnimals: myAnimals.length,
-      vaccinationsDue: activeSchedules.length || 2,
-      appointmentsToday: myAppointments.length > 0 ? myAppointments.length : 1,
+      totalAnimals,
+      vaccinationsDue, // Strictly real count (0 for new farmers, no fallback)
+      appointmentsToday, // Strictly real count (0 for new farmers, no fallback)
       weather: {
         temp: '28°C',
         condition: 'Humid/Clear',
@@ -182,10 +230,15 @@ async function registerAnimalHandler(req, res) {
       return res.status(400).json({ error: 'Ear Tag ID is required.' });
     }
 
-    // REQUIREMENT 8: Ear Tag ID must be unique. Reject duplicates!
+    // REQUIREMENT 3: Globally unique ear tag across ALL accounts. No two accounts can share same ear tag, and farmer cannot add it twice.
     let duplicate = false;
     if (isConnected) {
-      const existing = await Animal.findOne({ earTagId: resolvedTag });
+      const existing = await Animal.findOne({
+        $or: [
+          { earTagId: resolvedTag },
+          { tagNumber: resolvedTag }
+        ]
+      });
       if (existing) duplicate = true;
     } else {
       const existing = db.findAll('animals', a => (a.tagNumber && a.tagNumber.toUpperCase() === resolvedTag) || (a.earTagId && a.earTagId.toUpperCase() === resolvedTag));
@@ -194,8 +247,25 @@ async function registerAnimalHandler(req, res) {
 
     if (duplicate) {
       return res.status(409).json({
-        error: `Ear Tag ID '${resolvedTag}' is already registered in the National Animal Health Network. Duplicate tags are prohibited.`
+        error: `Ear Tag ID '${resolvedTag}' is already registered in the National Animal Health Network. Duplicate ear tags are strictly prohibited.`
       });
+    }
+
+    const userId = req.user._id || req.user.id;
+    let farmerDoc = null;
+    if (isConnected) {
+      farmerDoc = await Farmer.findOne({ userId });
+      if (!farmerDoc && (req.user.role === 'FARMER' || req.user.role === 'farmer')) {
+        farmerDoc = await Farmer.create({
+          userId,
+          farmerId: `FID-${Date.now().toString().slice(-6)}`,
+          name: req.user.name || 'Farmer',
+          phone: req.user.phone || '9999999999',
+          aadhaarNumber: `9999${Date.now().toString().slice(-8)}`,
+          district: district || req.user.district || 'Pune',
+          state: state || req.user.state || 'Maharashtra'
+        });
+      }
     }
 
     // System-generated human-readable Animal ID
@@ -210,7 +280,9 @@ async function registerAnimalHandler(req, res) {
       animalId,
       earTagId: resolvedTag,
       tagNumber: resolvedTag,
-      ownerId: req.user.id || req.user._id,
+      farmerId: farmerDoc ? farmerDoc._id : userId,
+      ownerId: userId,
+      farmerUserId: userId,
       name: resolvedName,
       species: resolvedSpecies,
       type: resolvedSpecies,
@@ -225,8 +297,8 @@ async function registerAnimalHandler(req, res) {
       vaccinationStatus: 'Up to Date',
       healthStatus: 'HEALTHY',
       location: location || req.user.location || { lat: 18.5204, lng: 73.8567 },
-      district: district || req.user.district || 'Pune',
-      state: state || req.user.state || 'Maharashtra',
+      district: district || (farmerDoc ? farmerDoc.district : 'Pune'),
+      state: state || (farmerDoc ? farmerDoc.state : 'Maharashtra'),
       createdAt: new Date().toISOString()
     };
 
@@ -236,9 +308,20 @@ async function registerAnimalHandler(req, res) {
         ...animalDoc,
         location: { type: 'Point', coordinates: [loc.lng || 73.8567, loc.lat || 18.5204] }
       });
+      if (farmerDoc) {
+        farmerDoc.animalsCount = (farmerDoc.animalsCount || 0) + 1;
+        await farmerDoc.save();
+      }
     }
 
     db.create('animals', animalDoc);
+
+    // Emit live WebSocket KPI update to Government Admin
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('kpi_update', { type: 'ANIMAL_ADDED', earTagId: resolvedTag, timestamp: Date.now() });
+    }
+
     return res.status(201).json(animalDoc);
   } catch (err) {
     console.error('Error adding animal:', err);

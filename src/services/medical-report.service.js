@@ -33,27 +33,39 @@ class MedicalReportService {
     }
 
     const animalKey = animal.animalId || animal.id || animal.tagNumber;
+    const cleanTag = (animal.earTagId || animal.tagNumber || animal.animalId || '').toUpperCase();
+    const animalMongoId = animal._id;
 
     let cases = [];
     let diagnoses = [];
     let treatments = [];
     let labTests = [];
     let vaccinations = [];
+    let testReports = [];
 
     if (isConnected) {
-      [cases, diagnoses, treatments, labTests, vaccinations] = await Promise.all([
-        Case.find({ animalId: animal._id }).lean(),
-        Diagnosis.find({ animalId: animal._id }).lean(),
-        Treatment.find({ animalId: animal._id }).lean(),
-        TestBooking.find({ animalId: animal._id }).populate('testReportId').lean(),
-        Vaccination.find({ animalId: animal._id }).lean(),
+      const animalFilter = [
+        animalMongoId ? { animalId: animalMongoId } : null,
+        animalKey ? { animalId: animalKey } : null,
+        cleanTag ? { animalTag: cleanTag } : null,
+        cleanTag ? { earTagId: cleanTag } : null,
+      ].filter(Boolean);
+
+      [cases, diagnoses, treatments, labTests, vaccinations, testReports] = await Promise.all([
+        Case.find({ $or: [{ animalId: animalMongoId }, { animalId: animalKey }, { animalTag: cleanTag }].filter(Boolean) }).lean(),
+        Diagnosis.find({ $or: [{ animalId: animalMongoId }, { animalId: animalKey }].filter(Boolean) }).lean(),
+        Treatment.find({ $or: [{ animalId: animalMongoId }, { animalId: animalKey }].filter(Boolean) }).lean(),
+        TestBooking.find({ $or: animalFilter }).sort({ createdAt: -1 }).lean(),
+        Vaccination.find({ $or: animalFilter }).lean(),
+        TestReport.find({ $or: animalFilter }).sort({ createdAt: -1 }).lean(),
       ]);
     } else {
-      cases = db.findAll('cases', c => c.animalId === animal.id || c.animalTag === animal.tagNumber);
-      diagnoses = db.findAll('diagnoses', d => d.animalId === animal.id);
-      treatments = db.findAll('treatments', t => t.animalId === animal.id);
-      labTests = db.findAll('testBookings', tb => tb.animalId === animal.id);
-      vaccinations = db.findAll('vaccinationBookings', v => v.animalId === animal.id);
+      cases = db.findAll('cases', c => c.animalId === animal.id || c.animalTag === animal.tagNumber || c.animalTag === cleanTag);
+      diagnoses = db.findAll('diagnoses', d => d.animalId === animal.id || d.animalId === animalKey);
+      treatments = db.findAll('treatments', t => t.animalId === animal.id || t.animalId === animalKey);
+      labTests = db.findAll('testBookings', tb => tb.animalId === animal.id || tb.animalTag === cleanTag);
+      vaccinations = db.findAll('vaccinationBookings', v => v.animalId === animal.id || v.animalTag === cleanTag);
+      testReports = db.findAll('testReports', r => r.animalTag === cleanTag || r.animalId === animalKey);
     }
 
     return {
@@ -108,14 +120,28 @@ class MedicalReportService {
         followUpDate: t.followUpDate,
         specialInstructions: t.specialInstructions || t.instructions
       })),
-      laboratoryTests: labTests.map(t => ({
-        bookingId: t.bookingId || t.id,
-        testType: t.testType,
-        status: t.status,
-        labName: t.labName || 'State Veterinary Diagnostic Lab',
-        scheduledDate: t.scheduledDate,
-        report: t.testReportId || t.report || null
-      })),
+      laboratoryTests: labTests.map(t => {
+        const matchingReport = t.report || testReports.find(r => r.bookingId === t.bookingId || r.bookingId === t.id || r.testBookingId === t.bookingId);
+        return {
+          bookingId: t.bookingId || t.id,
+          testType: t.testType,
+          status: t.status,
+          labName: t.labName || 'State Veterinary Biological Diagnostic Research Institute',
+          scheduledDate: t.date || t.slotDate || t.scheduledDate,
+          slotTime: t.slotTime,
+          report: matchingReport ? {
+            reportId: matchingReport.reportId,
+            testResult: matchingReport.testResult || 'Completed',
+            resultSummary: matchingReport.resultSummary,
+            parameters: matchingReport.parameters,
+            observations: matchingReport.observations,
+            isAbnormal: matchingReport.isAbnormal,
+            reportFileUrl: matchingReport.reportFileUrl,
+            finalizedAt: matchingReport.finalizedAt,
+            staffName: matchingReport.staffName || matchingReport.finalizedBy || 'Laboratory Technologist'
+          } : null
+        };
+      }),
       vaccinations: vaccinations.map(v => ({
         vaccineName: v.vaccineName || v.vaccine,
         administeredDate: v.administeredDate || v.bookingDate,

@@ -7,13 +7,13 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema(
   {
     email: { type: String, lowercase: true, trim: true, index: true },
-    phone: { type: String, required: true, trim: true, unique: true, index: true },
-    password: { type: String, required: true },
+    phone: { type: String, required: false, trim: true, sparse: true, index: true },
+    password: { type: String, required: false }, // farmers authenticate via OTP, vets via password
     name: { type: String, required: true, trim: true },
     role: {
       type: String,
       required: true,
-      enum: ['FARMER', 'VETERINARIAN', 'LAB_STAFF', 'ADMIN'],
+      enum: ['FARMER', 'VETERINARIAN', 'VET', 'LAB_STAFF', 'ADMIN'],
       index: true,
     },
     isActive: { type: Boolean, default: true },
@@ -24,17 +24,18 @@ const userSchema = new mongoose.Schema(
 const farmerSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+    farmerId: { type: String, required: true, unique: true, index: true }, // Mandatory State Farmer ID
     name: { type: String, required: true },
-    phone: { type: String, required: true },
+    phone: { type: String, required: true, index: true },
     email: { type: String, default: '' },
     address: { type: String, default: '' },
-    postalCode: { type: String, required: true, index: true },
-    district: { type: String, required: true, index: true },
-    state: { type: String, required: true },
+    postalCode: { type: String, default: '411001', index: true },
+    district: { type: String, default: 'Pune', index: true },
+    state: { type: String, default: 'Maharashtra' },
     country: { type: String, default: 'India' },
     village: { type: String, default: '' },
-    aadhaarNumber: { type: String, default: '' },
-    aadhaarVerified: { type: Boolean, default: false },
+    aadhaarNumber: { type: String, required: true, unique: true, index: true }, // Unique 12-digit Aadhaar
+    aadhaarVerified: { type: Boolean, default: true },
     animalsCount: { type: Number, default: 0 },
     location: {
       type: { type: String, enum: ['Point'], default: 'Point' },
@@ -47,17 +48,18 @@ farmerSchema.index({ location: '2dsphere' });
 
 const veterinarianSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', unique: true, sparse: true },
     doctorId: { type: String, required: true, unique: true, index: true }, // State veterinary council reg number
     name: { type: String, required: true },
     phone: { type: String, required: true },
-    email: { type: String, default: '' },
+    email: { type: String, required: true, unique: true, index: true },
     qualification: { type: String, default: 'B.V.Sc & A.H.' },
     specialization: { type: String, default: 'General Veterinary Medicine' },
+    certificateUrl: { type: String, default: '' },
     hospitalClinic: { type: String, default: 'Government Veterinary Dispensary' },
-    experienceYears: { type: Number, default: 5 },
-    district: { type: String, required: true, index: true },
-    state: { type: String, required: true },
+    experienceYears: { type: Number, default: 3 },
+    district: { type: String, default: 'Pune', index: true },
+    state: { type: String, default: 'Maharashtra' },
     verificationStatus: {
       type: String,
       enum: ['PENDING', 'VERIFIED', 'REJECTED'],
@@ -67,6 +69,7 @@ const veterinarianSchema = new mongoose.Schema(
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     verifiedAt: { type: Date },
     rejectionReason: { type: String, default: '' },
+    assignedTempPassword: { type: String, default: '' },
     isAvailableForEmergency: { type: Boolean, default: true },
     currentWorkload: { type: Number, default: 0 },
     location: {
@@ -123,22 +126,32 @@ laboratorySchema.index({ location: '2dsphere' });
 const animalSchema = new mongoose.Schema(
   {
     animalId: { type: String, required: true, unique: true, index: true }, // ANM-2026-XXXXXX
-    earTagId: { type: String, required: true, unique: true, index: true }, // Unique ear tag
+    earTagId: { type: String, required: true, unique: true, index: true, uppercase: true, trim: true }, // Globally unique ear tag across all accounts
+    tagNumber: { type: String, index: true, uppercase: true, trim: true },
     farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Farmer', required: true, index: true },
-    name: { type: String, required: true },
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
+    farmerUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
+    name: { type: String, required: true, trim: true },
     species: { type: String, required: true, index: true }, // Cow, Buffalo, Goat, Sheep, etc.
-    breed: { type: String, required: true },
-    gender: { type: String, required: true, enum: ['Female', 'Male'] },
+    breed: { type: String, required: true, trim: true },
+    gender: { type: String, required: true, enum: ['Female', 'Male'], default: 'Female' },
     ageYears: { type: Number, required: true },
     lactationStage: { type: String, default: 'Non-Lactating' },
     dailyMilkYieldLiters: { type: Number, default: 0 },
     photoUrl: { type: String, default: 'assets/images/animal_cow.png' },
     vaccinationStatus: { type: String, default: 'Up to Date' },
-    healthStatus: { type: String, default: 'Healthy' },
+    healthStatus: { type: String, default: 'HEALTHY' },
     treatmentInfo: { type: mongoose.Schema.Types.Mixed },
+    district: { type: String, default: 'Pune', index: true },
+    state: { type: String, default: 'Maharashtra' },
+    location: {
+      type: { type: String, enum: ['Point'], default: 'Point' },
+      coordinates: { type: [Number], default: [73.8567, 18.5204] },
+    },
   },
   { timestamps: true }
 );
+animalSchema.index({ location: '2dsphere' });
 
 const animalImageSchema = new mongoose.Schema(
   {
@@ -343,13 +356,22 @@ const treatmentSchema = new mongoose.Schema(
 
 const testBookingSchema = new mongoose.Schema(
   {
-    testBookingId: { type: String, required: true, unique: true, index: true },
+    bookingId: { type: String, unique: true, sparse: true, index: true },
+    testBookingId: { type: String, index: true },
     caseId: { type: String, index: true },
     animalId: { type: String, required: true, index: true },
-    farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Farmer', required: true, index: true },
-    laboratoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Laboratory', required: true, index: true },
-    testType: { type: String, required: true },
-    slotDate: { type: String, required: true },
+    animalTag: { type: String, required: true, index: true, uppercase: true, trim: true },
+    animalType: { type: String, default: 'Cow' },
+    farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Farmer', index: true },
+    farmerName: { type: String, default: '' },
+    farmerPhone: { type: String, default: '' },
+    laboratoryId: { type: String, default: 'lab-pune-central', index: true },
+    labName: { type: String, default: 'State Veterinary Biological Diagnostic Research Institute' },
+    district: { type: String, default: 'Pune', index: true },
+    testType: { type: String, required: true, index: true },
+    date: { type: String },
+    slotDate: { type: String },
+    slotId: { type: String },
     slotTime: { type: String, required: true },
     status: {
       type: String,
@@ -359,32 +381,38 @@ const testBookingSchema = new mongoose.Schema(
       index: true,
     },
     notes: { type: String, default: '' },
+    startedAt: { type: Date },
+    completedAt: { type: Date },
+    staffId: { type: String, default: '' },
+    staffName: { type: String, default: '' },
+    reportId: { type: String, default: '' },
+    report: { type: mongoose.Schema.Types.Mixed },
   },
   { timestamps: true }
 );
 
 const testReportSchema = new mongoose.Schema(
   {
-    testBookingId: { type: String, required: true, unique: true, index: true },
+    reportId: { type: String, required: true, unique: true, index: true },
+    bookingId: { type: String, index: true },
+    testBookingId: { type: String, index: true },
     animalId: { type: String, required: true, index: true },
+    animalTag: { type: String, required: true, index: true, uppercase: true, trim: true },
     caseId: { type: String, index: true },
-    laboratoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Laboratory', required: true, index: true },
-    staffId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    laboratoryId: { type: String, default: 'lab-pune-central' },
+    staffId: { type: String, default: '' },
+    staffName: { type: String, default: '' },
     testType: { type: String, required: true },
+    testResult: { type: String, default: 'Completed' },
     resultSummary: { type: String, required: true },
-    statusValue: { type: String, default: 'Normal', enum: ['Normal', 'Attention Required', 'Critical', 'Positive', 'Negative'] },
-    parameters: [
-      {
-        parameter: { type: String, required: true },
-        value: { type: String, required: true },
-        unit: { type: String, default: '' },
-        referenceRange: { type: String, default: '' },
-        isNormal: { type: Boolean, default: true },
-      },
-    ],
+    statusValue: { type: String, default: 'Normal' },
+    parameters: { type: mongoose.Schema.Types.Mixed },
+    observations: { type: String, default: '' },
+    isAbnormal: { type: Boolean, default: false },
     reportFileUrl: { type: String, default: '' },
-    isFinalized: { type: Boolean, default: false },
-    finalizedAt: { type: Date },
+    isFinalized: { type: Boolean, default: true },
+    finalizedBy: { type: String, default: '' },
+    finalizedAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

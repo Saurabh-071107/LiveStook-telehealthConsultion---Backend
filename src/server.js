@@ -35,6 +35,7 @@ const io = new Server(server, {
     methods: ['GET', 'POST', 'PATCH', 'DELETE']
   }
 });
+app.set('io', io);
 
 // Middleware
 app.use(cors());

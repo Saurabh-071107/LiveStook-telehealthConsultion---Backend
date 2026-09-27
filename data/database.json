@@ -119,6 +119,48 @@
         "lng": 77.209
       },
       "createdAt": "2025-11-01T00:00:00.000Z"
+    },
+    {
+      "id": "usr-farmer-1790524950539",
+      "name": "Santosh Gaikwad",
+      "phone": "9822119796",
+      "email": "9822119796@pashu.in",
+      "role": "farmer",
+      "farmerId": "FRM-MH-924569",
+      "aadhaarNumber": "889994384095",
+      "aadhaarVerified": true,
+      "village": "Khed",
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T16:02:30.539Z"
+    },
+    {
+      "id": "usr-farmer-1790524990807",
+      "name": "Santosh Gaikwad",
+      "phone": "9822111667",
+      "email": "9822111667@pashu.in",
+      "role": "farmer",
+      "farmerId": "FRM-MH-339878",
+      "aadhaarNumber": "889958226545",
+      "aadhaarVerified": true,
+      "village": "Khed",
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T16:03:10.807Z"
+    },
+    {
+      "id": "usr-farmer-1790525027032",
+      "name": "Santosh Gaikwad",
+      "phone": "9822110205",
+      "email": "9822110205@pashu.in",
+      "role": "farmer",
+      "farmerId": "FRM-MH-288197",
+      "aadhaarNumber": "889952134611",
+      "aadhaarVerified": true,
+      "village": "Khed",
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T16:03:47.032Z"
     }
   ],
   "animals": [
@@ -248,6 +290,64 @@
       "district": "Pune",
       "state": "Maharashtra",
       "createdAt": "2026-09-27T10:59:29.309Z"
+    },
+    {
+      "id": "ANM-2026-690574",
+      "animalId": "ANM-2026-690574",
+      "earTagId": "ET-638479",
+      "tagNumber": "ET-638479",
+      "farmerId": "usr-farmer-1790524990807",
+      "ownerId": "usr-farmer-1790524990807",
+      "farmerUserId": "usr-farmer-1790524990807",
+      "name": "Gauri 2",
+      "species": "Cow",
+      "type": "Cow",
+      "breed": "Gir Cross",
+      "ageYears": 3,
+      "weightKg": 0,
+      "age": "3 years",
+      "gender": "Female",
+      "lactationStage": "Active",
+      "dailyMilkYieldLiters": 10,
+      "photoUrl": "assets/images/animal_cow.png",
+      "vaccinationStatus": "Up to Date",
+      "healthStatus": "HEALTHY",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T16:03:10.868Z"
+    },
+    {
+      "id": "ANM-2026-195710",
+      "animalId": "ANM-2026-195710",
+      "earTagId": "ET-158758",
+      "tagNumber": "ET-158758",
+      "farmerId": "usr-farmer-1790525027032",
+      "ownerId": "usr-farmer-1790525027032",
+      "farmerUserId": "usr-farmer-1790525027032",
+      "name": "Gauri 2",
+      "species": "Cow",
+      "type": "Cow",
+      "breed": "Gir Cross",
+      "ageYears": 3,
+      "weightKg": 0,
+      "age": "3 years",
+      "gender": "Female",
+      "lactationStage": "Active",
+      "dailyMilkYieldLiters": 10,
+      "photoUrl": "assets/images/animal_cow.png",
+      "vaccinationStatus": "Up to Date",
+      "healthStatus": "HEALTHY",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T16:03:47.106Z"
     }
   ],
   "cases": [
@@ -709,7 +809,7 @@
     },
     {
       "id": "OBK-2026-669607",
-      "outbreakId": "OBK-2026-602076",
+      "outbreakId": "OBK-2026-909543",
       "diseaseCategory": "General Bovine Health",
       "region": "Pune, Maharashtra",
       "district": "Pune",
@@ -737,7 +837,7 @@
       },
       "forecastSnapshot": [
         {
-          "timestamp": "2026-09-27T16:26:46.338Z",
+          "timestamp": "2026-09-27T19:03:39.383Z",
           "temp": 29,
           "humidity": 70,
           "rain": 0.5,
@@ -745,7 +845,7 @@
           "description": "light rain shower"
         },
         {
-          "timestamp": "2026-09-27T19:26:46.338Z",
+          "timestamp": "2026-09-27T22:03:39.383Z",
           "temp": 27.5,
           "humidity": 75,
           "rain": 2.1,
@@ -753,7 +853,7 @@
           "description": "moderate rain"
         },
         {
-          "timestamp": "2026-09-28T01:26:46.338Z",
+          "timestamp": "2026-09-28T04:03:39.383Z",
           "temp": 25,
           "humidity": 82,
           "rain": 0,
@@ -761,7 +861,7 @@
           "description": "overcast"
         },
         {
-          "timestamp": "2026-09-28T13:26:46.338Z",
+          "timestamp": "2026-09-28T16:03:39.383Z",
           "temp": 26.5,
           "humidity": 78,
           "rain": 1.2,
@@ -770,7 +870,7 @@
         }
       ],
       "modelVersion": "outbreak-risk-v1.2",
-      "updatedAt": "2026-09-27T13:26:46.718Z"
+      "updatedAt": "2026-09-27T16:03:39.745Z"
     }
   ],
   "broadcasts": [
@@ -804,9 +904,133 @@
       "reportedDate": "2026-03-01"
     }
   ],
-  "testBookings": [],
+  "testBookings": [
+    {
+      "id": "TB-2026-564897",
+      "bookingId": "TB-2026-564897",
+      "testBookingId": "TB-2026-564897",
+      "farmerId": "usr-farmer-1790524990807",
+      "farmerName": "Santosh Gaikwad",
+      "farmerPhone": "9822111667",
+      "animalId": "ANM-2026-690574",
+      "animalTag": "ET-638479",
+      "animalType": "Cow (Gir Cross)",
+      "caseId": null,
+      "laboratoryId": "lab-pune-central",
+      "labName": "State Veterinary Biological Diagnostic Research Institute",
+      "district": "Pune",
+      "testType": "California Mastitis Test (CMT)",
+      "date": "2026-09-28",
+      "slotDate": "2026-09-28",
+      "slotId": "2026-09-28_1000",
+      "slotTime": "10:00 AM - 11:00 AM",
+      "notes": "Mild heat in udder during morning milking",
+      "status": "TEST_BOOKED",
+      "createdAt": "2026-09-27T16:03:10.919Z"
+    },
+    {
+      "id": "TB-2026-942764",
+      "bookingId": "TB-2026-942764",
+      "testBookingId": "TB-2026-942764",
+      "farmerId": "usr-farmer-1790525027032",
+      "farmerName": "Santosh Gaikwad",
+      "farmerPhone": "9822110205",
+      "animalId": "ANM-2026-195710",
+      "animalTag": "ET-158758",
+      "animalType": "Cow (Gir Cross)",
+      "caseId": null,
+      "laboratoryId": "lab-pune-central",
+      "labName": "State Veterinary Biological Diagnostic Research Institute",
+      "district": "Pune",
+      "testType": "California Mastitis Test (CMT)",
+      "date": "2026-09-28",
+      "slotDate": "2026-09-28",
+      "slotId": "2026-09-28_1000",
+      "slotTime": "10:00 AM - 11:00 AM",
+      "notes": "Mild heat in udder during morning milking",
+      "status": "REPORT_AVAILABLE",
+      "createdAt": "2026-09-27T16:03:47.255Z",
+      "startedAt": "2026-09-27T16:03:47.387Z",
+      "staffId": "usr-lab-1",
+      "staffName": "Dr. Neha Kulkarni",
+      "updatedAt": "2026-09-27T16:03:47.391Z",
+      "reportId": "RPT-2026-341728",
+      "report": {
+        "id": "RPT-2026-341728",
+        "reportId": "RPT-2026-341728",
+        "bookingId": "TB-2026-942764",
+        "testBookingId": "TB-2026-942764",
+        "animalId": "ANM-2026-195710",
+        "animalTag": "ET-158758",
+        "caseId": null,
+        "testType": "California Mastitis Test (CMT)",
+        "testResult": "Somatic Cell Count 450,000 cells/mL (CMT Grade 1+)",
+        "resultSummary": "Mild Subclinical Mastitis detected in right rear teat.",
+        "parameters": {
+          "CMT Score": "Grade 1+ (Slight precipitation)",
+          "Somatic Cell Count (SCC)": "450,000 / mL (Normal: <200,000)",
+          "Milk pH": "6.8 (Slightly alkaline)"
+        },
+        "reportFileUrl": "/uploads/reports/CMT_Certified_Report.pdf",
+        "observations": "Suggest intramammary herbal rinse and hygiene protocol before antibiotic intervention.",
+        "isAbnormal": true,
+        "finalizedBy": "Dr. Neha Kulkarni",
+        "staffName": "Dr. Neha Kulkarni",
+        "finalizedAt": "2026-09-27T16:03:47.390Z"
+      },
+      "completedAt": "2026-09-27T16:03:47.391Z"
+    },
+    {
+      "id": "TB-2026-525716",
+      "bookingId": "TB-2026-525716",
+      "testBookingId": "TB-2026-525716",
+      "farmerId": "usr-farmer-1790525027032",
+      "farmerName": "Santosh Gaikwad",
+      "farmerPhone": "9822110205",
+      "animalId": "ANM-2026-195710",
+      "animalTag": "ET-158758",
+      "animalType": "Cow (Gir Cross)",
+      "caseId": null,
+      "laboratoryId": "lab-pune-central",
+      "labName": "State Veterinary Biological Diagnostic Research Institute",
+      "district": "Pune",
+      "testType": "California Mastitis Test (CMT)",
+      "date": "2026-10-05",
+      "slotDate": "2026-10-05",
+      "slotId": "2026-10-05_1000",
+      "slotTime": "11:00 AM - 12:00 PM",
+      "notes": "Follow-up check after treatment",
+      "status": "TEST_BOOKED",
+      "createdAt": "2026-09-27T16:03:47.585Z"
+    }
+  ],
   "consultations": [],
   "auditLogs": [],
   "diagnoses": [],
-  "treatments": []
+  "treatments": [],
+  "testReports": [
+    {
+      "id": "RPT-2026-341728",
+      "reportId": "RPT-2026-341728",
+      "bookingId": "TB-2026-942764",
+      "testBookingId": "TB-2026-942764",
+      "animalId": "ANM-2026-195710",
+      "animalTag": "ET-158758",
+      "caseId": null,
+      "testType": "California Mastitis Test (CMT)",
+      "testResult": "Somatic Cell Count 450,000 cells/mL (CMT Grade 1+)",
+      "resultSummary": "Mild Subclinical Mastitis detected in right rear teat.",
+      "parameters": {
+        "CMT Score": "Grade 1+ (Slight precipitation)",
+        "Somatic Cell Count (SCC)": "450,000 / mL (Normal: <200,000)",
+        "Milk pH": "6.8 (Slightly alkaline)"
+      },
+      "reportFileUrl": "/uploads/reports/CMT_Certified_Report.pdf",
+      "observations": "Suggest intramammary herbal rinse and hygiene protocol before antibiotic intervention.",
+      "isAbnormal": true,
+      "finalizedBy": "Dr. Neha Kulkarni",
+      "staffName": "Dr. Neha Kulkarni",
+      "finalizedAt": "2026-09-27T16:03:47.390Z"
+    }
+  ]
 }

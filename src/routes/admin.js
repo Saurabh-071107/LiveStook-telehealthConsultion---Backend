@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { Veterinarian, Farmer, Animal, Case, Consultation, TestBooking, Vaccination, Outbreak, AuditLog } = require('../models');
+const bcrypt = require('bcryptjs');
+const { User, Veterinarian, Farmer, Animal, Case, Consultation, TestBooking, Vaccination, Outbreak, AuditLog } = require('../models');
 const { isConnected } = require('../db/mongo');
 const { authenticate, requireRole } = require('../middleware/auth');
 const medicalReportService = require('../services/medical-report.service');
@@ -46,23 +47,23 @@ router.get('/stats', authenticate, requireRole('government_admin', 'ADMIN', 'adm
     const completedCases = cases.filter(c => c.status === 'CLOSED' || c.status === 'resolved' || c.status === 'COMPLETED');
 
     const stats = {
-      farmersCount: farmers.length || 18,
-      animalsCount: animals.length || 42,
-      totalVets: vets.length || 8,
+      farmersCount: farmers.length,
+      animalsCount: animals.length,
+      totalVets: vets.length,
       verifiedVetsCount: verifiedVets.length,
       pendingVetsCount: pendingVets.length,
       rejectedVetsCount: rejectedVets.length,
       activeCasesCount: activeCases.length,
       completedCasesCount: completedCases.length,
-      totalConsultations: consultations.length || 34,
-      totalLabTests: testBookings.length || 19,
+      totalConsultations: consultations.length,
+      totalLabTests: testBookings.length,
       activeOutbreaksCount: outbreaks.filter(o => o.riskCategory === 'HIGH' || o.riskCategory === 'CRITICAL' || o.quarantineActive).length,
       diseaseDistribution: {
-        'Foot and Mouth Disease': cases.filter(c => (c.preliminaryCondition || '').includes('Foot') || (c.symptoms || []).includes('Blisters')).length + 4,
-        'Lumpy Skin Disease': cases.filter(c => (c.preliminaryCondition || '').includes('Lumpy') || (c.symptoms || []).includes('Lumps')).length + 3,
-        'Mastitis': cases.filter(c => (c.preliminaryCondition || '').includes('Mastitis') || (c.symptoms || []).includes('Milk')).length + 6,
-        'Bovine Respiratory Disease': cases.filter(c => (c.preliminaryCondition || '').includes('Respiratory') || (c.symptoms || []).includes('Cough')).length + 2,
-        'General Fever/Inappetence': cases.filter(c => (c.symptoms || []).includes('Fever')).length + 5
+        'Foot and Mouth Disease': cases.filter(c => (c.preliminaryCondition || '').includes('Foot') || (c.symptoms || []).includes('Blisters')).length,
+        'Lumpy Skin Disease': cases.filter(c => (c.preliminaryCondition || '').includes('Lumpy') || (c.symptoms || []).includes('Lumps')).length,
+        'Mastitis': cases.filter(c => (c.preliminaryCondition || '').includes('Mastitis') || (c.symptoms || []).includes('Milk')).length,
+        'Bovine Respiratory Disease': cases.filter(c => (c.preliminaryCondition || '').includes('Respiratory') || (c.symptoms || []).includes('Cough')).length,
+        'General Fever/Inappetence': cases.filter(c => (c.symptoms || []).includes('Fever')).length
       }
     };
 
@@ -73,13 +74,38 @@ router.get('/stats', authenticate, requireRole('government_admin', 'ADMIN', 'adm
   }
 });
 
-// GET /api/admin/vets (List all vets with verification credentials)
-router.get('/vets', authenticate, requireRole('government_admin', 'ADMIN', 'admin'), (req, res) => {
+// GET /api/admin/vets (List all vets with verification credentials from MongoDB)
+router.get('/vets', authenticate, requireRole('government_admin', 'ADMIN', 'admin'), async (req, res) => {
   try {
+    if (isConnected) {
+      const vets = await Veterinarian.find({}).sort({ createdAt: -1 }).lean();
+      const formatted = vets.map(v => ({
+        id: v._id.toString(),
+        userId: v.userId ? v.userId.toString() : '',
+        doctorId: v.doctorId,
+        name: v.name,
+        phone: v.phone,
+        email: v.email,
+        qualification: v.qualification,
+        specialization: v.specialization,
+        certificateUrl: v.certificateUrl || '',
+        hospitalClinic: v.hospitalClinic,
+        district: v.district,
+        state: v.state,
+        verificationStatus: v.verificationStatus || 'PENDING',
+        isApproved: v.verificationStatus === 'VERIFIED',
+        assignedTempPassword: v.assignedTempPassword || '',
+        rejectionReason: v.rejectionReason || '',
+        verifiedAt: v.verifiedAt,
+      }));
+      return res.json(formatted);
+    }
+
     const vets = db.findAll('users', u => u.role === 'vet' || u.role === 'veterinarian');
     const safeVets = vets.map(({ password, ...safe }) => safe);
     return res.json(safeVets);
   } catch (err) {
+    console.error('Fetch vets list error:', err);
     return res.status(500).json({ error: 'Failed to fetch veterinarians list.' });
   }
 });
@@ -87,11 +113,110 @@ router.get('/vets', authenticate, requireRole('government_admin', 'ADMIN', 'admi
 // PATCH /api/admin/vets/:id/verify (Verify or reject veterinarian with reason)
 router.patch('/vets/:id/verify', authenticate, requireRole('government_admin', 'ADMIN', 'admin'), async (req, res) => {
   try {
-    const { status, rejectionReason = '' } = req.body; // 'VERIFIED', 'REJECTED', 'PENDING'
+    const { status, rejectionReason = '', assignedPassword } = req.body; // 'VERIFIED', 'REJECTED', 'PENDING'
     const normalized = (status || '').toUpperCase();
 
     if (!['VERIFIED', 'REJECTED', 'PENDING'].includes(normalized)) {
       return res.status(400).json({ error: 'Valid status is VERIFIED, REJECTED, or PENDING.' });
+    }
+
+    if (isConnected) {
+      let vet = null;
+      const mongoose = require('mongoose');
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        vet = await Veterinarian.findById(req.params.id);
+      }
+      if (!vet) {
+        vet = await Veterinarian.findOne({
+          $or: [{ doctorId: req.params.id }, { userId: req.params.id }, { email: req.params.id.toLowerCase() }],
+        });
+      }
+
+      if (!vet) {
+        return res.status(404).json({ error: 'Veterinarian profile not found.' });
+      }
+
+      let generatedPassword = '';
+      if (normalized === 'VERIFIED') {
+        const cleanDocId = vet.doctorId.replace(/[^a-zA-Z0-9]/g, '');
+        generatedPassword = assignedPassword || `Vet@${cleanDocId || '2026'}`;
+        const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
+
+        let user = null;
+        if (vet.userId) {
+          user = await User.findById(vet.userId);
+        }
+        if (!user && vet.email) {
+          user = await User.findOne({ email: vet.email.toLowerCase() });
+        }
+        if (!user && vet.phone) {
+          user = await User.findOne({ phone: vet.phone });
+        }
+
+        if (user) {
+          user.role = 'VETERINARIAN';
+          user.password = hashedPassword;
+          user.name = vet.name;
+          user.email = vet.email;
+          user.isActive = true;
+          await user.save();
+        } else {
+          user = await User.create({
+            name: vet.name,
+            email: vet.email.toLowerCase(),
+            phone: vet.phone,
+            password: hashedPassword,
+            role: 'VETERINARIAN',
+            isActive: true,
+          });
+        }
+
+        vet.userId = user._id;
+        vet.verificationStatus = 'VERIFIED';
+        vet.isApproved = true;
+        vet.assignedTempPassword = generatedPassword;
+        vet.verifiedBy = req.user._id || req.user.id;
+        vet.verifiedAt = new Date();
+        vet.rejectionReason = '';
+        await vet.save();
+      } else if (normalized === 'REJECTED') {
+        vet.verificationStatus = 'REJECTED';
+        vet.isApproved = false;
+        vet.rejectionReason = rejectionReason || 'Incomplete credentials';
+        await vet.save();
+      } else {
+        vet.verificationStatus = 'PENDING';
+        vet.isApproved = false;
+        await vet.save();
+      }
+
+      await AuditLog.create({
+        actorId: req.user._id || req.user.id,
+        actorRole: 'ADMIN',
+        action: `VET_VERIFICATION_${normalized}`,
+        entityId: vet._id.toString(),
+        details: { rejectionReason, doctorId: vet.doctorId, generatedPassword: normalized === 'VERIFIED' ? generatedPassword : null }
+      });
+
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('kpi_update', { type: 'VET_STATUS_UPDATED', vetId: vet._id.toString(), status: normalized, timestamp: Date.now() });
+      }
+
+      return res.json({
+        success: true,
+        message: `Veterinarian status updated to ${normalized}.`,
+        credentials: normalized === 'VERIFIED' ? { email: vet.email, password: generatedPassword } : null,
+        vet: {
+          id: vet._id.toString(),
+          doctorId: vet.doctorId,
+          name: vet.name,
+          email: vet.email,
+          verificationStatus: vet.verificationStatus,
+          isApproved: vet.verificationStatus === 'VERIFIED',
+          assignedTempPassword: vet.assignedTempPassword,
+        },
+      });
     }
 
     const vet = db.findById('users', req.params.id);
@@ -99,44 +224,27 @@ router.patch('/vets/:id/verify', authenticate, requireRole('government_admin', '
       return res.status(404).json({ error: 'Veterinarian profile not found.' });
     }
 
+    const cleanDocId = (vet.doctorId || '2026').replace(/[^a-zA-Z0-9]/g, '');
+    const tempPassword = assignedPassword || `Vet@${cleanDocId}`;
     const updates = {
       verificationStatus: normalized,
       isApproved: normalized === 'VERIFIED',
       availableForCalls: normalized === 'VERIFIED',
       verifiedBy: req.user.id,
       verifiedAt: new Date().toISOString(),
-      rejectionReason: normalized === 'REJECTED' ? rejectionReason : ''
+      rejectionReason: normalized === 'REJECTED' ? rejectionReason : '',
+      assignedTempPassword: normalized === 'VERIFIED' ? tempPassword : '',
+      password: normalized === 'VERIFIED' ? bcrypt.hashSync(tempPassword, 10) : vet.password,
     };
-
-    if (isConnected) {
-      await Veterinarian.findOneAndUpdate({ $or: [{ userId: req.params.id }, { doctorId: req.params.id }] }, updates);
-      await AuditLog.create({
-        actorId: req.user._id || req.user.id,
-        actorRole: 'ADMIN',
-        action: `VET_VERIFICATION_${normalized}`,
-        entityType: 'VETERINARIAN',
-        entityId: req.params.id,
-        details: { rejectionReason }
-      });
-    }
 
     const updated = db.updateById('users', req.params.id, updates);
     const { password, ...safe } = updated;
 
-    // Send push notification to vet about status change
-    notificationService.sendNotification({
-      userIds: [req.params.id],
-      title: normalized === 'VERIFIED' ? 'Veterinary Credentials Verified!' : 'Credential Verification Update',
-      message: normalized === 'VERIFIED' 
-        ? 'Your state veterinary license has been approved. You are now authorized to receive clinical teleconsultations.'
-        : `Verification status updated: ${normalized}. Reason: ${rejectionReason || 'Please resubmit valid registration credentials.'}`,
-      data: { type: 'VET_VERIFICATION_UPDATE', status: normalized }
-    });
-
     return res.json({
       success: true,
       message: `Veterinarian status updated to ${normalized}.`,
-      vet: safe
+      credentials: normalized === 'VERIFIED' ? { email: updated.email, password: tempPassword } : null,
+      vet: safe,
     });
   } catch (err) {
     console.error('Vet verification error:', err);
