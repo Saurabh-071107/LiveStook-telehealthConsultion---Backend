@@ -1,6 +1,6 @@
 const config = require('../config');
 const { AuditLog } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 
 /**
  * OneSignal & Push Notification Service
@@ -20,7 +20,7 @@ class NotificationService {
     console.log(`[Notification] [${title}] ${message} -> ${userIds ? userIds.join(', ') : segments}`);
 
     // Log to Audit trail
-    if (isConnected) {
+    if (mongo.isConnected) {
       try {
         await AuditLog.create({
           actorRole: 'SYSTEM',

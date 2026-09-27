@@ -37,6 +37,9 @@ module.exports = {
   connectMongoDB,
   mongoose,
   get isConnected() {
-    return isConnected;
+    return mongoose.connection.readyState === 1 || isConnected;
+  },
+  isMongoConnected() {
+    return mongoose.connection.readyState === 1 || isConnected;
   }
 };

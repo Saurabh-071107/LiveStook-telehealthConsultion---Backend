@@ -3,7 +3,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { Case, Animal, AIAnalysis, AuditLog } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 const { authenticate, requireRole } = require('../middleware/auth');
 const aiClientService = require('../services/ai-client.service');
 const vetAssignmentService = require('../services/vet-assignment.service');
@@ -23,7 +23,7 @@ router.get('/', authenticate, async (req, res) => {
     const { status, district, animalId } = req.query;
     let cases = [];
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       const query = {};
       const role = (req.user.role || '').toLowerCase();
 
@@ -73,7 +73,7 @@ router.get('/', authenticate, async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
   try {
     let healthCase;
-    if (isConnected) {
+    if (mongo.isConnected) {
       healthCase = await Case.findOne({
         $or: [{ caseId: req.params.id }, { _id: req.params.id.match(/^[0-9a-fA-F]{24}$/) ? req.params.id : null }]
       }).lean();
@@ -93,7 +93,7 @@ router.get('/:id', authenticate, async (req, res) => {
 router.get('/:id/medical-history', authenticate, async (req, res) => {
   try {
     let targetCase = db.findById('cases', req.params.id) || db.findAll('cases', c => c.caseId === req.params.id)[0];
-    if (isConnected && !targetCase) {
+    if (mongo.isConnected && !targetCase) {
       targetCase = await Case.findOne({ caseId: req.params.id }).lean();
     }
     if (!targetCase) return res.status(404).json({ error: 'Case not found.' });
@@ -128,7 +128,7 @@ router.post('/', authenticate, async (req, res) => {
 
     // Lookup Animal
     let animal;
-    if (isConnected) {
+    if (mongo.isConnected) {
       animal = await Animal.findOne({
         $or: [{ animalId }, { earTagId: animalId }]
       }).lean();
@@ -195,7 +195,7 @@ router.post('/', authenticate, async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       const createdCase = await Case.create(newCase);
       await AIAnalysis.create({
         caseId: createdCase._id,
@@ -213,7 +213,7 @@ router.post('/', authenticate, async (req, res) => {
     db.create('cases', newCase);
 
     // Update Animal Health Status
-    if (isConnected) {
+    if (mongo.isConnected) {
       await Animal.findOneAndUpdate(
         { $or: [{ animalId: animal.animalId }, { earTagId: animalTag }] },
         { healthStatus: aiAssessment.risk_level === 'HIGH' ? 'Critical' : 'Ongoing Treatment' }
@@ -252,7 +252,7 @@ router.post('/:id/accept', authenticate, requireRole('vet', 'VETERINARIAN', 'gov
     const caseId = req.params.id;
     let targetCase = db.findById('cases', caseId) || db.findAll('cases', c => c.caseId === caseId)[0];
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       const doc = await Case.findOne({ caseId }) || await Case.findById(caseId);
       if (doc) {
         doc.status = 'ACCEPTED';

@@ -3,7 +3,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { Consultation, Diagnosis, Treatment, Case, Animal, AuditLog } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 const { authenticate, requireRole } = require('../middleware/auth');
 const agoraService = require('../services/agora.service');
 const notificationService = require('../services/notification.service');
@@ -15,7 +15,7 @@ router.post('/start', authenticate, requireRole('vet', 'VETERINARIAN', 'governme
 
     let appointment = null;
     if (appointmentId) {
-      if (isConnected) {
+      if (mongo.isConnected) {
         appointment = await Appointment.findById(appointmentId).lean();
       } else {
         appointment = db.findById('appointments', appointmentId);
@@ -47,7 +47,7 @@ router.post('/start', authenticate, requireRole('vet', 'VETERINARIAN', 'governme
       startedAt: new Date().toISOString()
     };
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       await Consultation.create(consultationDoc);
       await Case.findOneAndUpdate({ caseId: resolvedCaseId }, { status: 'CONSULTATION_ACTIVE' });
     }
@@ -99,7 +99,7 @@ router.post('/:id/diagnosis', authenticate, requireRole('vet', 'VETERINARIAN', '
       createdAt: new Date().toISOString()
     };
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       await Diagnosis.create(diagnosisDoc);
       if (caseId) {
         await Case.findOneAndUpdate({ caseId }, { status: 'DIAGNOSIS_COMPLETED' });
@@ -145,7 +145,7 @@ router.post('/:id/treatment', authenticate, requireRole('vet', 'VETERINARIAN', '
       createdAt: new Date().toISOString()
     };
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       await Treatment.create(treatmentDoc);
       if (caseId) {
         await Case.findOneAndUpdate({ caseId }, { status: 'TREATMENT_CREATED' });
@@ -188,7 +188,7 @@ router.post('/:id/recommend-test', authenticate, requireRole('vet', 'VETERINARIA
       createdAt: new Date().toISOString()
     };
 
-    if (isConnected && caseId) {
+    if (mongo.isConnected && caseId) {
       await Case.findOneAndUpdate({ caseId }, { status: 'TEST_RECOMMENDED' });
     }
 

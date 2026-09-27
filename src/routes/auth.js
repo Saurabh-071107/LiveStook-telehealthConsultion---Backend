@@ -7,7 +7,7 @@ const fs = require('fs');
 const multer = require('multer');
 
 const { User, Farmer, Veterinarian, AuditLog } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 const db = require('../db');
 const config = require('../config');
 const { authenticate } = require('../middleware/auth');
@@ -114,7 +114,7 @@ router.post('/verify-aadhaar', async (req, res) => {
     const cleanFarmerId = farmerId.toString().trim().toUpperCase();
 
     // Check MongoDB for duplicate Aadhaar
-    if (isConnected) {
+    if (mongo.isConnected) {
       const existingAadhaar = await Farmer.findOne({ aadhaarNumber: cleanAadhaar }).lean();
       if (existingAadhaar) {
         return res.status(400).json({
@@ -168,7 +168,7 @@ router.post('/send-otp', async (req, res) => {
     }
 
     let existingUser = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       existingUser = await User.findOne({ phone: cleanPhone }).lean();
     } else {
       existingUser = db.findAll('users', u => normalizePhone(u.phone) === cleanPhone)[0];
@@ -240,7 +240,7 @@ router.post('/complete-registration', async (req, res) => {
     const cleanFarmerId = farmerId.toString().trim().toUpperCase();
 
     // Enforce uniqueness in MongoDB
-    if (isConnected) {
+    if (mongo.isConnected) {
       const existingPhone = await User.findOne({ phone: cleanPhone }).lean();
       if (existingPhone) {
         return res.status(400).json({
@@ -377,7 +377,7 @@ router.post('/verify-otp-login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid or expired OTP. Please enter 1234.' });
     }
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       // Find Farmer User in MongoDB Atlas
       const user = await User.findOne({ phone: cleanPhone }).lean();
       if (!user) {
@@ -469,7 +469,7 @@ router.post('/vet/request-access', async (req, res) => {
     const cleanEmail = email.toString().trim().toLowerCase();
     const cleanPhone = normalizePhone(phone);
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       // Check if doctor ID, email, or phone is already registered in Veterinarian
       const existingVet = await Veterinarian.findOne({
         $or: [
@@ -581,7 +581,7 @@ router.get('/vet/status/:identifier', async (req, res) => {
     const cleanPhone = normalizePhone(rawId);
 
     let vet = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       vet = await Veterinarian.findOne({
         $or: [
           { doctorId: rawId.toUpperCase() },
@@ -648,7 +648,7 @@ router.post(['/vet/login', '/login'], async (req, res) => {
 
     const cleanPhone = normalizePhone(identifier);
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       // Find in User collection
       const user = await User.findOne({
         $or: [

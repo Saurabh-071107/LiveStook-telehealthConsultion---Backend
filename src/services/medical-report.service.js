@@ -1,5 +1,5 @@
 const { Animal, Case, Consultation, Diagnosis, Treatment, TestBooking, TestReport, Vaccination } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 const db = require('../db');
 
 /**
@@ -20,7 +20,7 @@ class MedicalReportService {
    */
   async getFullMedicalHistory(animalIdOrEarTag) {
     let animal;
-    if (isConnected) {
+    if (mongo.isConnected) {
       animal = await Animal.findOne({
         $or: [{ animalId: animalIdOrEarTag }, { earTagId: animalIdOrEarTag }]
       }).lean();
@@ -43,7 +43,7 @@ class MedicalReportService {
     let vaccinations = [];
     let testReports = [];
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       const animalFilter = [
         animalMongoId ? { animalId: animalMongoId } : null,
         animalKey ? { animalId: animalKey } : null,

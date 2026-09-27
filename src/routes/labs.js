@@ -3,7 +3,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { Laboratory, TestBooking, TestReport, Case, Animal } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 const { authenticate, requireRole } = require('../middleware/auth');
 const notificationService = require('../services/notification.service');
 
@@ -23,7 +23,7 @@ function generateCollectionOtp() {
 router.get('/', authenticate, async (req, res) => {
   try {
     let labs = [];
-    if (isConnected) {
+    if (mongo.isConnected) {
       labs = await Laboratory.find({}).lean();
     } else {
       labs = db.findAll('laboratories');
@@ -106,7 +106,7 @@ router.post('/book', authenticate, requireRole('farmer', 'FARMER', 'government_a
 
     // 1. Verify Animal in MongoDB Atlas
     let animal;
-    if (isConnected) {
+    if (mongo.isConnected) {
       animal = await Animal.findOne({
         $or: [{ animalId }, { earTagId: animalId }, { tagNumber: animalId }]
       }).lean();
@@ -123,7 +123,7 @@ router.post('/book', authenticate, requireRole('farmer', 'FARMER', 'government_a
 
     // 2. REQUIREMENT 3: A farmer cannot book another test of the same type for the same animal until the 1st is done!
     let activeTest = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       activeTest = await TestBooking.findOne({
         animalTag: cleanTag,
         testType: testType,
@@ -178,7 +178,7 @@ router.post('/book', authenticate, requireRole('farmer', 'FARMER', 'government_a
       createdAt: new Date().toISOString()
     };
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       await TestBooking.create(bookingDoc);
       if (caseId) {
         await Case.findOneAndUpdate({ caseId }, { status: 'TEST_BOOKED' });
@@ -212,7 +212,7 @@ router.get('/staff/queue', authenticate, async (req, res) => {
     const { status, testType } = req.query;
     let list = [];
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       const query = {};
       if (status && status !== 'ALL') query.status = status;
       if (testType) query.testType = new RegExp(testType, 'i');
@@ -237,7 +237,7 @@ router.patch('/tests/:id/accept', authenticate, requireRole('lab_staff', 'LAB_ST
     const assignedPhone = collectorPhone || '+91 98765 43210';
 
     let updated = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       updated = await TestBooking.findOneAndUpdate(
         { $or: [{ bookingId: req.params.id }, { testBookingId: req.params.id }, { id: req.params.id }] },
         {
@@ -289,7 +289,7 @@ router.post('/tests/:id/verify-collection', authenticate, requireRole('lab_staff
     const { otp } = req.body;
 
     let existingBooking = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       existingBooking = await TestBooking.findOne({
         $or: [{ bookingId: req.params.id }, { id: req.params.id }]
       });
@@ -317,7 +317,7 @@ router.post('/tests/:id/verify-collection', authenticate, requireRole('lab_staff
     existingBooking.collectedAt = new Date();
 
     let updated = null;
-    if (isConnected && typeof existingBooking.save === 'function') {
+    if (mongo.isConnected && typeof existingBooking.save === 'function') {
       await existingBooking.save();
       updated = existingBooking.toObject();
     }
@@ -352,7 +352,7 @@ router.patch('/tests/:id/start', authenticate, requireRole('lab_staff', 'LAB_STA
   try {
     let updated = null;
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       updated = await TestBooking.findOneAndUpdate(
         { $or: [{ bookingId: req.params.id }, { testBookingId: req.params.id }, { id: req.params.id }] },
         {
@@ -409,7 +409,7 @@ router.post('/tests/:id/upload-report', authenticate, requireRole('lab_staff', '
     } = req.body;
 
     let existingBooking = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       existingBooking = await TestBooking.findOne({
         $or: [{ bookingId: req.params.id }, { id: req.params.id }]
       });
@@ -444,7 +444,7 @@ router.post('/tests/:id/upload-report', authenticate, requireRole('lab_staff', '
       finalizedAt: new Date()
     };
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       await TestReport.create(reportDoc);
       existingBooking.status = 'REPORT_AVAILABLE';
       existingBooking.reportId = reportId;
@@ -491,7 +491,7 @@ router.get('/animal/:tag/reports', authenticate, async (req, res) => {
     const cleanTag = req.params.tag.trim().toUpperCase();
     let reports = [];
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       reports = await TestReport.find({ animalTag: cleanTag }).sort({ createdAt: -1 }).lean();
     } else {
       reports = db.findAll('testReports', r => (r.animalTag && r.animalTag.toUpperCase() === cleanTag) || r.animalId === cleanTag);
@@ -507,7 +507,7 @@ router.get('/animal/:tag/reports', authenticate, async (req, res) => {
 router.get('/tests/:id/report', authenticate, async (req, res) => {
   try {
     let report = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       report = await TestReport.findOne({
         $or: [{ bookingId: req.params.id }, { reportId: req.params.id }, { id: req.params.id }]
       }).lean();
@@ -529,7 +529,7 @@ router.get('/tests/:id/report', authenticate, async (req, res) => {
 router.get('/tests/:id/status', authenticate, async (req, res) => {
   try {
     let booking = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       booking = await TestBooking.findOne({
         $or: [{ bookingId: req.params.id }, { id: req.params.id }]
       }).lean();
@@ -553,7 +553,7 @@ router.get('/farmer/active-test', authenticate, async (req, res) => {
     const phone = req.user.phone;
     let active = null;
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       active = await TestBooking.findOne({
         $or: [{ farmerId }, { farmerPhone: phone }],
         status: { $nin: ['CANCELLED'] }
@@ -577,7 +577,7 @@ router.get('/farmer/reports', authenticate, async (req, res) => {
     const farmerId = req.user._id || req.user.id;
     let reports = [];
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       const animals = await Animal.find({
         $or: [{ farmerId }, { farmerPhone: req.user.phone }]
       }).lean();

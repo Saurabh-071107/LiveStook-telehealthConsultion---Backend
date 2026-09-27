@@ -3,7 +3,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { VaccinationBooking, Vaccination, Animal, VaccinationSchedule } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 const { authenticate, requireRole } = require('../middleware/auth');
 const notificationService = require('../services/notification.service');
 const vaccineIntelligenceService = require('../services/vaccine-intelligence.service');
@@ -106,7 +106,7 @@ router.get('/farmer/livestock-status', authenticate, async (req, res) => {
 
     // 1. Fetch real animals for this farmer
     let animals = [];
-    if (isConnected) {
+    if (mongo.isConnected) {
       animals = await Animal.find({
         $or: [{ farmerId }, { farmerPhone }]
       }).lean();
@@ -121,7 +121,7 @@ router.get('/farmer/livestock-status', authenticate, async (req, res) => {
     // 3. Fetch all vaccination records and bookings for this farmer
     let allVaccinations = [];
     let allBookings = [];
-    if (isConnected) {
+    if (mongo.isConnected) {
       allVaccinations = await Vaccination.find({ farmerId }).lean();
       allBookings = await VaccinationBooking.find({
         $or: [{ farmerId }, { farmerPhone }]
@@ -206,7 +206,7 @@ router.post('/book', authenticate, requireRole('farmer', 'FARMER', 'government_a
 
     // 1. Verify Animal
     let animal;
-    if (isConnected) {
+    if (mongo.isConnected) {
       animal = await Animal.findOne({
         $or: [{ animalId }, { earTagId: animalId }, { tagNumber: animalId }]
       }).lean();
@@ -223,7 +223,7 @@ router.post('/book', authenticate, requireRole('farmer', 'FARMER', 'government_a
 
     // 2. Prevent duplicate active bookings for the same vaccine & animal
     let activeBooking = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       activeBooking = await VaccinationBooking.findOne({
         animalTag: cleanTag,
         vaccineName,
@@ -279,7 +279,7 @@ router.post('/book', authenticate, requireRole('farmer', 'FARMER', 'government_a
     };
 
     let createdBooking;
-    if (isConnected) {
+    if (mongo.isConnected) {
       createdBooking = await VaccinationBooking.create(bookingData);
     } else {
       createdBooking = db.create('vaccinationBookings', bookingData);
@@ -306,7 +306,7 @@ router.post('/book', authenticate, requireRole('farmer', 'FARMER', 'government_a
 router.get('/bookings', authenticate, async (req, res) => {
   try {
     let list = [];
-    if (isConnected) {
+    if (mongo.isConnected) {
       const filter = req.user.role === 'farmer' ? { farmerId: req.user.id } : {};
       list = await VaccinationBooking.find(filter).sort({ createdAt: -1 }).lean();
     } else {
@@ -325,7 +325,7 @@ router.get('/bookings', authenticate, async (req, res) => {
 router.get('/lab/queue', authenticate, async (req, res) => {
   try {
     let queue = [];
-    if (isConnected) {
+    if (mongo.isConnected) {
       queue = await VaccinationBooking.find({
         status: { $in: ['CONFIRMED', 'REQUESTED', 'ACCEPTED', 'OUT_FOR_VACCINATION', 'ADMINISTERED', 'COMPLETED'] }
       }).sort({ createdAt: -1 }).lean();
@@ -346,7 +346,7 @@ router.patch('/bookings/:id/accept', authenticate, async (req, res) => {
     const { vaccinatorName, vaccinatorPhone, batchNumber, coldChainStatus } = req.body;
 
     let booking = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       booking = await VaccinationBooking.findOne({
         $or: [{ id: bookingParamId }, { bookingId: bookingParamId }]
       });
@@ -410,7 +410,7 @@ router.post('/bookings/:id/verify-otp', authenticate, async (req, res) => {
     }
 
     let booking = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       booking = await VaccinationBooking.findOne({
         $or: [{ id: bookingParamId }, { bookingId: bookingParamId }]
       });
@@ -437,7 +437,7 @@ router.post('/bookings/:id/verify-otp', authenticate, async (req, res) => {
     const nextDate = new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0];
 
     // 1. Update Booking Status
-    if (isConnected) {
+    if (mongo.isConnected) {
       booking.status = 'COMPLETED';
       booking.certificateIssued = true;
       booking.certificateId = certId;
@@ -471,7 +471,7 @@ router.post('/bookings/:id/verify-otp', authenticate, async (req, res) => {
       notes: remarks || 'Administered at doorstep via mobile OTP verification'
     };
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       await Vaccination.findOneAndUpdate(
         {
           animalId: booking.animalTag,
@@ -515,7 +515,7 @@ router.get('/bookings/:id/status', authenticate, async (req, res) => {
   try {
     const bookingParamId = req.params.id;
     let booking = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       booking = await VaccinationBooking.findOne({
         $or: [{ id: bookingParamId }, { bookingId: bookingParamId }]
       }).lean();
@@ -555,7 +555,7 @@ router.get('/bookings/:id/status', authenticate, async (req, res) => {
 router.get('/farmer/active-booking', authenticate, async (req, res) => {
   try {
     let booking = null;
-    if (isConnected) {
+    if (mongo.isConnected) {
       booking = await VaccinationBooking.findOne({
         $or: [{ farmerId: req.user.id }, { farmerPhone: req.user.phone }],
         status: { $in: ['CONFIRMED', 'REQUESTED', 'ACCEPTED', 'OUT_FOR_VACCINATION'] }

@@ -1,6 +1,6 @@
 const { Veterinarian, Case, AuditLog } = require('../models');
 const db = require('../db');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 
 /**
  * Vet Assignment Service
@@ -21,7 +21,7 @@ class VetAssignmentService {
   async findEligibleVet(caseObj, excludedVetIds = []) {
     const district = caseObj.district || (caseObj.location && caseObj.location.district);
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       // 1. Search verified and active veterinarians
       const query = {
         verificationStatus: 'VERIFIED',
@@ -66,7 +66,7 @@ class VetAssignmentService {
    */
   async assignCase(caseId, excludedVetIds = []) {
     let caseRecord;
-    if (isConnected) {
+    if (mongo.isConnected) {
       caseRecord = await Case.findOne({ caseId }) || await Case.findById(caseId);
     } else {
       caseRecord = db.findById('cases', caseId) || db.findAll('cases', c => c.caseId === caseId)[0];
@@ -79,7 +79,7 @@ class VetAssignmentService {
     const selectedVet = await this.findEligibleVet(caseRecord, excludedVetIds);
     if (!selectedVet) {
       // No vet available, mark case as QUEUED
-      if (isConnected) {
+      if (mongo.isConnected) {
         caseRecord.status = 'QUEUED';
         await caseRecord.save();
       } else {
@@ -91,7 +91,7 @@ class VetAssignmentService {
     const vetId = selectedVet._id ? selectedVet._id.toString() : selectedVet.id;
     const vetName = selectedVet.name;
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       caseRecord.assignedVetId = selectedVet._id;
       caseRecord.status = 'PENDING_ACCEPTANCE';
       await caseRecord.save();
@@ -134,7 +134,7 @@ class VetAssignmentService {
    */
   async handleVetRejection(caseId, rejectingVetId, reason = '') {
     let caseRecord;
-    if (isConnected) {
+    if (mongo.isConnected) {
       caseRecord = await Case.findOne({ caseId }) || await Case.findById(caseId);
     } else {
       caseRecord = db.findById('cases', caseId) || db.findAll('cases', c => c.caseId === caseId)[0];
@@ -143,7 +143,7 @@ class VetAssignmentService {
     if (!caseRecord) throw new Error(`Case ${caseId} not found.`);
 
     // Decrement rejecting vet workload
-    if (isConnected) {
+    if (mongo.isConnected) {
       await Veterinarian.findByIdAndUpdate(rejectingVetId, { $inc: { currentWorkload: -1 } });
     }
 

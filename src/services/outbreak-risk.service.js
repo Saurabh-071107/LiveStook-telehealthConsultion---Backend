@@ -1,5 +1,5 @@
 const { Case, Outbreak, Farmer, WeatherData } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 const db = require('../db');
 const weatherService = require('./weather.service');
 
@@ -15,7 +15,7 @@ class OutbreakRiskEngine {
    */
   async evaluateAllDistricts() {
     let cases = [];
-    if (isConnected) {
+    if (mongo.isConnected) {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 3600 * 1000);
       cases = await Case.find({ createdAt: { $gte: thirtyDaysAgo } }).lean();
     } else {
@@ -122,7 +122,7 @@ class OutbreakRiskEngine {
       };
 
       // Persist in DB
-      if (isConnected) {
+      if (mongo.isConnected) {
         await Outbreak.findOneAndUpdate(
           { district: cluster.district, diseaseCategory: cluster.diseaseCategory },
           outbreakDoc,
@@ -151,7 +151,7 @@ class OutbreakRiskEngine {
    */
   async getSurveillanceMapLayers() {
     let outbreaks = [];
-    if (isConnected) {
+    if (mongo.isConnected) {
       outbreaks = await Outbreak.find({}).lean();
     } else {
       outbreaks = db.findAll('outbreaks');
@@ -160,7 +160,7 @@ class OutbreakRiskEngine {
     // Default geographic seed if database is newly initialized
     if (!outbreaks || outbreaks.length === 0) {
       await this.evaluateAllDistricts();
-      if (isConnected) outbreaks = await Outbreak.find({}).lean();
+      if (mongo.isConnected) outbreaks = await Outbreak.find({}).lean();
       else outbreaks = db.findAll('outbreaks');
     }
 

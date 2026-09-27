@@ -3,7 +3,8 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { Animal, AnimalImage, Farmer, Case, Vaccination } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
+const mongoose = require('mongoose');
 const { authenticate, requireRole } = require('../middleware/auth');
 const medicalReportService = require('../services/medical-report.service');
 
@@ -20,16 +21,22 @@ router.get('/', authenticate, async (req, res) => {
     let animals = [];
     const userId = req.user._id || req.user.id;
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       let query = {};
       if (req.user.role === 'FARMER' || req.user.role === 'farmer') {
-        const farmerDoc = await Farmer.findOne({ userId }).lean();
+        let farmerDoc = null;
+        if (mongoose.isValidObjectId(userId)) {
+          farmerDoc = await Farmer.findOne({ userId }).lean();
+        }
+        if (!farmerDoc && req.user.phone) {
+          farmerDoc = await Farmer.findOne({ phone: req.user.phone }).lean();
+        }
         const farmerProfileId = farmerDoc ? farmerDoc._id : null;
         query = {
           $or: [
-            { farmerId: farmerProfileId },
-            { ownerId: userId },
-            { farmerUserId: userId }
+            farmerProfileId ? { farmerId: farmerProfileId } : null,
+            mongoose.isValidObjectId(userId) ? { ownerId: userId } : null,
+            mongoose.isValidObjectId(userId) ? { farmerUserId: userId } : null,
           ].filter(Boolean)
         };
       }
@@ -42,7 +49,7 @@ router.get('/', authenticate, async (req, res) => {
       }
     }
 
-    const allCases = isConnected ? [] : db.findAll('cases');
+    const allCases = mongo.isConnected ? [] : db.findAll('cases');
 
     const enrichedAnimals = animals.map(animal => {
       const animalTag = animal.earTagId || animal.tagNumber;
@@ -101,14 +108,20 @@ router.get('/dashboard-summary', authenticate, async (req, res) => {
     let appointmentsToday = 0;
     let vaccinationsDue = 0;
 
-    if (isConnected) {
-      const farmerDoc = await Farmer.findOne({ userId }).lean();
+    if (mongo.isConnected) {
+      let farmerDoc = null;
+      if (mongoose.isValidObjectId(userId)) {
+        farmerDoc = await Farmer.findOne({ userId }).lean();
+      }
+      if (!farmerDoc && req.user.phone) {
+        farmerDoc = await Farmer.findOne({ phone: req.user.phone }).lean();
+      }
       const farmerProfileId = farmerDoc ? farmerDoc._id : null;
       const animalQuery = {
         $or: [
-          { farmerId: farmerProfileId },
-          { ownerId: userId },
-          { farmerUserId: userId }
+          farmerProfileId ? { farmerId: farmerProfileId } : null,
+          mongoose.isValidObjectId(userId) ? { ownerId: userId } : null,
+          mongoose.isValidObjectId(userId) ? { farmerUserId: userId } : null,
         ].filter(Boolean)
       };
 
@@ -119,9 +132,9 @@ router.get('/dashboard-summary', authenticate, async (req, res) => {
       const apptQuery = {
         createdAt: { $gte: startOfDay },
         $or: [
-          { farmerId: farmerProfileId },
-          { farmerId: userId },
-          { userId: userId }
+          farmerProfileId ? { farmerId: farmerProfileId } : null,
+          mongoose.isValidObjectId(userId) ? { farmerId: userId } : null,
+          mongoose.isValidObjectId(userId) ? { userId: userId } : null,
         ].filter(Boolean)
       };
       appointmentsToday = await Case.countDocuments({
@@ -131,8 +144,8 @@ router.get('/dashboard-summary', authenticate, async (req, res) => {
 
       vaccinationsDue = await Vaccination.countDocuments({
         $or: [
-          { farmerId: farmerProfileId },
-          { farmerId: userId }
+          farmerProfileId ? { farmerId: farmerProfileId } : null,
+          mongoose.isValidObjectId(userId) ? { farmerId: userId } : null,
         ].filter(Boolean),
         status: 'DUE'
       });
@@ -165,7 +178,7 @@ router.get('/dashboard-summary', authenticate, async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
   try {
     let animal;
-    if (isConnected) {
+    if (mongo.isConnected) {
       animal = await Animal.findOne({
         $or: [{ animalId: req.params.id }, { earTagId: req.params.id }]
       }).lean();
@@ -232,7 +245,7 @@ async function registerAnimalHandler(req, res) {
 
     // REQUIREMENT 3: Globally unique ear tag across ALL accounts. No two accounts can share same ear tag, and farmer cannot add it twice.
     let duplicate = false;
-    if (isConnected) {
+    if (mongo.isConnected) {
       const existing = await Animal.findOne({
         $or: [
           { earTagId: resolvedTag },
@@ -253,15 +266,21 @@ async function registerAnimalHandler(req, res) {
 
     const userId = req.user._id || req.user.id;
     let farmerDoc = null;
-    if (isConnected) {
-      farmerDoc = await Farmer.findOne({ userId });
+    if (mongo.isConnected) {
+      if (mongoose.isValidObjectId(userId)) {
+        farmerDoc = await Farmer.findOne({ userId });
+      }
+      if (!farmerDoc && req.user.phone) {
+        farmerDoc = await Farmer.findOne({ phone: req.user.phone });
+      }
       if (!farmerDoc && (req.user.role === 'FARMER' || req.user.role === 'farmer')) {
+        const validUserId = mongoose.isValidObjectId(userId) ? userId : new mongoose.Types.ObjectId();
         farmerDoc = await Farmer.create({
-          userId,
-          farmerId: `FID-${Date.now().toString().slice(-6)}`,
+          userId: validUserId,
+          farmerId: req.user.farmerId || `FID-${Date.now().toString().slice(-6)}`,
           name: req.user.name || 'Farmer',
           phone: req.user.phone || '9999999999',
-          aadhaarNumber: `9999${Date.now().toString().slice(-8)}`,
+          aadhaarNumber: req.user.aadhaarNumber || `9999${Date.now().toString().slice(-8)}`,
           district: district || req.user.district || 'Pune',
           state: state || req.user.state || 'Maharashtra'
         });
@@ -275,14 +294,17 @@ async function registerAnimalHandler(req, res) {
     if (resolvedSpecies.toLowerCase().includes('buffalo')) defaultPhoto = 'assets/images/animal_buffalo.png';
     else if (resolvedSpecies.toLowerCase().includes('goat')) defaultPhoto = 'assets/images/animal_goat.png';
 
+    const ownerObjectId = farmerDoc?.userId || (mongoose.isValidObjectId(userId) ? userId : null);
+    const farmerProfileId = farmerDoc?._id || (mongoose.isValidObjectId(userId) ? userId : new mongoose.Types.ObjectId());
+
     const animalDoc = {
       id: animalId,
       animalId,
       earTagId: resolvedTag,
       tagNumber: resolvedTag,
-      farmerId: farmerDoc ? farmerDoc._id : userId,
-      ownerId: userId,
-      farmerUserId: userId,
+      farmerId: farmerProfileId,
+      ownerId: ownerObjectId,
+      farmerUserId: ownerObjectId,
       name: resolvedName,
       species: resolvedSpecies,
       type: resolvedSpecies,
@@ -302,10 +324,13 @@ async function registerAnimalHandler(req, res) {
       createdAt: new Date().toISOString()
     };
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       const loc = animalDoc.location;
       await Animal.create({
         ...animalDoc,
+        farmerId: farmerProfileId,
+        ownerId: ownerObjectId,
+        farmerUserId: ownerObjectId,
         location: { type: 'Point', coordinates: [loc.lng || 73.8567, loc.lat || 18.5204] }
       });
       if (farmerDoc) {
@@ -362,7 +387,7 @@ router.post('/:id/images', authenticate, async (req, res) => {
       uploadedAt: new Date().toISOString()
     };
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       await AnimalImage.create(imageRecord);
     }
     db.create('animalImages', imageRecord);

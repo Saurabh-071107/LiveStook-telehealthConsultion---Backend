@@ -1,6 +1,6 @@
 const config = require('../config');
 const { WeatherData } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 
 // In-memory cache fallback when MongoDB isn't active
 const memoryCache = new Map();
@@ -77,7 +77,7 @@ class WeatherService {
     const ttlMs = config.weatherCacheTtlMinutes * 60 * 1000;
 
     // 1. Check MongoDB cache if active
-    if (isConnected) {
+    if (mongo.isConnected) {
       const cached = await WeatherData.findOne({ postalCode }).sort({ recordedAt: -1 });
       if (cached && cached.expiresAt && cached.expiresAt > now) {
         return {
@@ -198,7 +198,7 @@ class WeatherService {
     };
 
     // 6. Save in Mongo or Memory Cache
-    if (isConnected) {
+    if (mongo.isConnected) {
       await WeatherData.findOneAndUpdate(
         { postalCode },
         {

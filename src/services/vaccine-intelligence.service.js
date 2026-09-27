@@ -1,5 +1,5 @@
 const { Animal, Vaccination, Outbreak, WeatherData } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 const db = require('../db');
 const notificationService = require('./notification.service');
 
@@ -49,7 +49,7 @@ class VaccineIntelligenceService {
    */
   async getRegionalOutbreaks(district = 'Pune') {
     try {
-      if (isConnected) {
+      if (mongo.isConnected) {
         return await Outbreak.find({
           $or: [
             { region: new RegExp(district, 'i') },
@@ -166,7 +166,7 @@ class VaccineIntelligenceService {
     const outbreaks = await this.getRegionalOutbreaks(district);
 
     let animals = [];
-    if (isConnected) {
+    if (mongo.isConnected) {
       animals = await Animal.find({
         $or: [{ farmerId }, { farmerPhone: userPhone }]
       }).lean();
@@ -183,7 +183,7 @@ class VaccineIntelligenceService {
 
       // Check existing completed vaccinations in DB
       let existingVaccs = [];
-      if (isConnected) {
+      if (mongo.isConnected) {
         existingVaccs = await Vaccination.find({ animalId: { $in: [tag, animal.animalId, animal.id] } }).lean();
       } else {
         existingVaccs = db.findAll('vaccinations', v => v.animalId === tag || v.animalId === animal.animalId);
@@ -197,7 +197,7 @@ class VaccineIntelligenceService {
 
         if (!alreadyDone) {
           // Add or update pending status in MongoDB
-          if (isConnected) {
+          if (mongo.isConnected) {
             await Vaccination.findOneAndUpdate(
               {
                 animalId: tag,

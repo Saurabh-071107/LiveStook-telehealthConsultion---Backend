@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const bcrypt = require('bcryptjs');
 const { User, Veterinarian, Farmer, Animal, Case, Consultation, TestBooking, Vaccination, Outbreak, AuditLog } = require('../models');
-const { isConnected } = require('../db/mongo');
+const mongo = require('../db/mongo');
 const { authenticate, requireRole } = require('../middleware/auth');
 const medicalReportService = require('../services/medical-report.service');
 const notificationService = require('../services/notification.service');
@@ -19,7 +19,7 @@ router.get('/stats', authenticate, requireRole('government_admin', 'ADMIN', 'adm
     let consultations = [];
     let outbreaks = [];
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       [vets, cases, animals, farmers, testBookings, consultations, outbreaks] = await Promise.all([
         Veterinarian.find({}).lean(),
         Case.find({}).lean(),
@@ -77,7 +77,7 @@ router.get('/stats', authenticate, requireRole('government_admin', 'ADMIN', 'adm
 // GET /api/admin/vets (List all vets with verification credentials from MongoDB)
 router.get('/vets', authenticate, requireRole('government_admin', 'ADMIN', 'admin'), async (req, res) => {
   try {
-    if (isConnected) {
+    if (mongo.isConnected) {
       const vets = await Veterinarian.find({}).sort({ createdAt: -1 }).lean();
       const formatted = vets.map(v => ({
         id: v._id.toString(),
@@ -120,7 +120,7 @@ router.patch('/vets/:id/verify', authenticate, requireRole('government_admin', '
       return res.status(400).json({ error: 'Valid status is VERIFIED, REJECTED, or PENDING.' });
     }
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       let vet = null;
       const mongoose = require('mongoose');
       if (mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -266,7 +266,7 @@ router.get('/reports/animal/:id', authenticate, requireRole('government_admin', 
 router.get('/audit-logs', authenticate, requireRole('government_admin', 'ADMIN', 'admin'), async (req, res) => {
   try {
     let logs = [];
-    if (isConnected) {
+    if (mongo.isConnected) {
       logs = await AuditLog.find({}).sort({ createdAt: -1 }).limit(100).lean();
     } else {
       logs = db.findAll('auditLogs');

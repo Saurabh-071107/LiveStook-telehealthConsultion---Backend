@@ -37,9 +37,9 @@ const mongoose = require('mongoose');
     const decoded = jwt.verify(token, config.jwtSecret);
     let user = null;
     const { User } = require('../models');
-    const { isConnected } = require('../db/mongo');
+    const mongo = require('../db/mongo');
 
-    if (isConnected) {
+    if (mongo.isConnected) {
       if (mongoose.isValidObjectId(decoded.id)) {
         user = await User.findById(decoded.id).lean();
       } else {
@@ -49,7 +49,7 @@ const mongoose = require('mongoose');
     if (!user) {
       user = db.findById('users', decoded.id);
     }
-    if (!user && isConnected && decoded.phone) {
+    if (!user && mongo.isConnected && decoded.phone) {
       user = await User.findOne({ phone: decoded.phone }).lean();
     }
     if (!user) {
@@ -62,9 +62,9 @@ const mongoose = require('mongoose');
       const unverified = jwt.decode(token);
       if (unverified && unverified.id) {
         const { User } = require('../models');
-        const { isConnected } = require('../db/mongo');
+        const mongo = require('../db/mongo');
         let user = null;
-        if (isConnected) {
+        if (mongo.isConnected) {
           if (mongoose.isValidObjectId(unverified.id)) {
             user = await User.findById(unverified.id).lean();
           } else {
