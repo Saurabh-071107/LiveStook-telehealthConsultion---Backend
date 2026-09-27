@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
-const { Case, Animal, AIAnalysis, AuditLog } = require('../models');
+const { Case, Animal, AIAnalysis, AuditLog, Farmer } = require('../models');
 const mongo = require('../db/mongo');
+const mongoose = require('mongoose');
 const { authenticate, requireRole } = require('../middleware/auth');
 const aiClientService = require('../services/ai-client.service');
 const vetAssignmentService = require('../services/vet-assignment.service');
@@ -105,13 +106,28 @@ router.get('/:id/medical-history', authenticate, async (req, res) => {
   }
 });
 
-// POST /api/cases (File a new health incident / scan)
-router.post('/', authenticate, async (req, res) => {
+// POST /api/cases/verify-animal-photo (Mandatory real-time verification that uploaded photo depicts an animal)
+router.post('/verify-animal-photo', authenticate, async (req, res) => {
+  try {
+    const { imageBase64, imageUrl, fileName } = req.body;
+    const result = await aiClientService.verifyAnimalPhoto({ imageBase64, imageUrl, fileName });
+    if (!result.isAnimal) {
+      return res.status(400).json(result);
+    }
+    return res.json(result);
+  } catch (err) {
+    console.error('Error verifying animal photo:', err);
+    return res.status(500).json({ isAnimal: false, error: 'Failed to verify animal photo.' });
+  }
+});
+
+// POST /api/cases (Farmer submits new case with MANDATORY animal photo & AI analysis)
+router.post('/', authenticate, requireRole('farmer', 'FARMER', 'vet', 'VETERINARIAN', 'government_admin', 'ADMIN'), async (req, res) => {
   try {
     const {
       animalId,
       symptoms = [],
-      majorSymptoms,
+      majorSymptoms = [],
       description = '',
       additionalSymptoms,
       photoUrls = [],
@@ -119,11 +135,31 @@ router.post('/', authenticate, async (req, res) => {
       location
     } = req.body;
 
-    const resolvedSymptoms = majorSymptoms || symptoms;
+    const resolvedSymptoms = majorSymptoms.length ? majorSymptoms : symptoms;
     const resolvedDescription = additionalSymptoms || description;
 
     if (!animalId || (!resolvedSymptoms.length && !resolvedDescription)) {
       return res.status(400).json({ error: 'Animal ID and symptoms/description are required.' });
+    }
+
+    // MANDATORY PHOTO VERIFICATION: At least one clear photo of animal or clinical area is strictly required
+    const primaryPhoto = (photoUrls && photoUrls.length > 0) ? photoUrls[0] : (images?.front || null);
+    if (!primaryPhoto) {
+      return res.status(400).json({
+        error: 'Upload of at least one photo of the animal or affected clinical area is strictly mandatory.'
+      });
+    }
+
+    // Verify that the photo is an animal
+    const photoVerification = await aiClientService.verifyAnimalPhoto({
+      imageUrl: primaryPhoto,
+      imageBase64: primaryPhoto.startsWith('data:') ? primaryPhoto : null
+    });
+
+    if (!photoVerification.isAnimal) {
+      return res.status(400).json({
+        error: photoVerification.error || 'The uploaded photo does not appear to be an animal. Please upload a clear photo of your livestock or the visible clinical sign.'
+      });
     }
 
     // Lookup Animal
@@ -146,7 +182,21 @@ router.post('/', authenticate, async (req, res) => {
     const district = req.user.district || animal.district || 'Pune';
     const state = req.user.state || animal.state || 'Maharashtra';
 
-    // 1. Call AI Analysis Microservice
+    // Resolve Farmer profile ObjectId
+    const userId = req.user._id || req.user.id;
+    let farmerDoc = null;
+    if (mongo.isConnected) {
+      if (mongoose.isValidObjectId(userId)) {
+        farmerDoc = await Farmer.findOne({ userId });
+      }
+      if (!farmerDoc && req.user.phone) {
+        farmerDoc = await Farmer.findOne({ phone: req.user.phone });
+      }
+    }
+    const farmerProfileId = farmerDoc?._id || (mongoose.isValidObjectId(userId) ? userId : new mongoose.Types.ObjectId());
+    const imageList = (photoUrls && photoUrls.length) ? photoUrls : [primaryPhoto];
+
+    // 1. Call AI Analysis Microservice / Clinical Dataset Engine
     const aiInput = {
       animal_age: animal.ageYears || animal.age || 3,
       breed: animal.breed || 'Crossbred',
@@ -154,7 +204,8 @@ router.post('/', authenticate, async (req, res) => {
       gender: animal.gender || 'Female',
       major_symptoms: resolvedSymptoms,
       additional_symptoms: resolvedDescription,
-      images: images || { front: photoUrls[0] || null }
+      images: { front: primaryPhoto },
+      photoUrls: imageList
     };
 
     const aiAssessment = await aiClientService.analyzeCase(aiInput);
@@ -166,7 +217,9 @@ router.post('/', authenticate, async (req, res) => {
       caseId,
       animalId: animal.animalId || animal.id,
       animalTag,
-      farmerId: req.user.id || req.user._id,
+      farmerId: farmerProfileId,
+      farmerUserId: userId,
+      farmerPhone: req.user.phone || '',
       assignedVetId: null,
       vetId: null,
       status: initialStatus,
@@ -174,20 +227,24 @@ router.post('/', authenticate, async (req, res) => {
       symptoms: resolvedSymptoms,
       additionalSymptoms: resolvedDescription,
       description: resolvedDescription,
-      photoUrls,
-      images,
+      photoUrls: imageList,
+      images: imageList,
       aiAnalysis: {
         riskLevel: aiAssessment.risk_level,
-        possibleConditions: aiAssessment.possible_conditions,
+        severity: aiAssessment.severity || aiAssessment.risk_level,
+        primaryCondition: aiAssessment.primary_condition || (aiAssessment.possible_conditions && aiAssessment.possible_conditions[0]),
+        possibleConditions: aiAssessment.possible_conditions || [],
         confidence: aiAssessment.confidence,
-        recommendedTests: aiAssessment.recommended_tests,
+        recommendedTests: aiAssessment.recommended_tests || [],
+        firstAid: aiAssessment.first_aid || [],
+        urgencyLabel: aiAssessment.urgency_label || 'Seek Vet Care',
         requiresVeterinarian: aiAssessment.requires_veterinarian,
-        environmentalFactors: aiAssessment.environmental_factors,
+        environmentalFactors: aiAssessment.environmental_factors || [],
         explanation: aiAssessment.explanation,
-        modelVersion: aiAssessment.model_version || 'animal-health-v1'
+        modelVersion: aiAssessment.model_version || 'animal-health-v2-prod'
       },
-      preliminaryCondition: aiAssessment.possible_conditions[0] || 'General Bovine Health',
-      severity: aiAssessment.risk_level === 'HIGH' ? 'HIGH' : (aiAssessment.risk_level === 'MEDIUM' ? 'MEDIUM' : 'LOW'),
+      preliminaryCondition: aiAssessment.primary_condition || (aiAssessment.possible_conditions && aiAssessment.possible_conditions[0]) || 'General Bovine Health',
+      severity: aiAssessment.severity || (aiAssessment.risk_level === 'HIGH' ? 'HIGH' : (aiAssessment.risk_level === 'MEDIUM' ? 'MEDIUM' : 'LOW')),
       location: location || animal.location || { lat: 18.5204, lng: 73.8567 },
       district,
       state,
@@ -197,17 +254,33 @@ router.post('/', authenticate, async (req, res) => {
 
     if (mongo.isConnected) {
       const createdCase = await Case.create(newCase);
-      await AIAnalysis.create({
-        caseId: createdCase._id,
-        modelVersion: aiAssessment.model_version || 'animal-health-v1',
-        riskLevel: aiAssessment.risk_level,
-        possibleConditions: aiAssessment.possible_conditions,
-        confidence: aiAssessment.confidence,
-        recommendedTests: aiAssessment.recommended_tests,
-        requiresVeterinarian: aiAssessment.requires_veterinarian,
-        environmentalFactors: aiAssessment.environmental_factors,
-        explanation: aiAssessment.explanation
+      const conditionsFormatted = (aiAssessment.possible_conditions || []).map((cond, idx) => {
+        if (typeof cond === 'string') {
+          return {
+            name: cond,
+            probability: idx === 0 ? aiAssessment.confidence : Math.max(0.3, +(aiAssessment.confidence - idx * 0.15).toFixed(2)),
+            severity: aiAssessment.severity || 'Moderate'
+          };
+        }
+        return cond;
       });
+
+      try {
+        await AIAnalysis.create({
+          caseId: createdCase.caseId || createdCase._id.toString(),
+          animalId: animal.animalId || animal.id || animalTag,
+          modelVersion: aiAssessment.model_version || 'animal-health-v2-prod',
+          riskLevel: aiAssessment.risk_level,
+          possibleConditions: conditionsFormatted,
+          confidence: aiAssessment.confidence,
+          recommendedTests: aiAssessment.recommended_tests || [],
+          requiresVeterinarian: aiAssessment.requires_veterinarian,
+          environmentalFactors: aiAssessment.environmental_factors || [],
+          explanation: aiAssessment.explanation || ''
+        });
+      } catch (aiErr) {
+        console.warn('AIAnalysis log warning:', aiErr.message);
+      }
     }
 
     db.create('cases', newCase);
@@ -216,9 +289,10 @@ router.post('/', authenticate, async (req, res) => {
     if (mongo.isConnected) {
       await Animal.findOneAndUpdate(
         { $or: [{ animalId: animal.animalId }, { earTagId: animalTag }] },
-        { healthStatus: aiAssessment.risk_level === 'HIGH' ? 'Critical' : 'Ongoing Treatment' }
+        { healthStatus: (aiAssessment.severity === 'CRITICAL' || aiAssessment.severity === 'HIGH') ? 'Critical' : 'Ongoing Treatment' }
       );
-    } else {
+    }
+ else {
       db.updateById('animals', animal.id, {
         healthStatus: aiAssessment.risk_level === 'HIGH' ? 'Critical' : 'Ongoing Treatment'
       });
