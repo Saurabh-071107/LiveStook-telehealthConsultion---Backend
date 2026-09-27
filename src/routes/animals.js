@@ -2,24 +2,42 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
+const { Animal, AnimalImage } = require('../models');
+const { isConnected } = require('../db/mongo');
 const { authenticate, requireRole } = require('../middleware/auth');
+const medicalReportService = require('../services/medical-report.service');
+
+// Helper to generate human-readable Animal ID: ANM-YYYY-NNNNNN
+function generateAnimalId() {
+  const year = new Date().getFullYear();
+  const seq = Math.floor(100000 + Math.random() * 900000);
+  return `ANM-${year}-${seq}`;
+}
 
 // GET /api/animals (Filtered by owner if farmer, enriched with Doctor & AI treatment status)
-router.get('/', authenticate, (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     let animals = [];
-    if (req.user.role === 'farmer') {
-      animals = db.findAll('animals', a => a.ownerId === req.user.id);
+
+    if (isConnected) {
+      const query = req.user.role === 'FARMER' || req.user.role === 'farmer' 
+        ? { ownerId: req.user._id || req.user.id } 
+        : {};
+      animals = await Animal.find(query).lean();
     } else {
-      animals = db.findAll('animals');
+      if (req.user.role === 'farmer' || req.user.role === 'FARMER') {
+        animals = db.findAll('animals', a => a.ownerId === req.user.id);
+      } else {
+        animals = db.findAll('animals');
+      }
     }
 
-    const allCases = db.findAll('cases');
+    const allCases = isConnected ? [] : db.findAll('cases');
 
-    // Requirement 8: Tag will be dynamically changed to "Ongoing Treatment" according to Doctor or AI response
     const enrichedAnimals = animals.map(animal => {
-      // Check if animal has an active case diagnosed by AI or Doctor
-      const activeCase = allCases.find(c => c.animalId === animal.id && c.status !== 'resolved');
+      const animalTag = animal.earTagId || animal.tagNumber;
+      const animalId = animal.animalId || animal.id;
+      const activeCase = allCases.find(c => (c.animalId === animalId || c.animalTag === animalTag) && c.status !== 'resolved' && c.status !== 'CLOSED');
 
       let dynamicStatus = animal.healthStatus || 'Healthy';
       let hasOngoingTreatment = false;
@@ -29,7 +47,7 @@ router.get('/', authenticate, (req, res) => {
         hasOngoingTreatment = true;
         dynamicStatus = 'Ongoing Treatment';
         treatmentInfo = {
-          caseId: activeCase.id,
+          caseId: activeCase.caseId || activeCase.id,
           suspectedDisease: activeCase.aiPredictedDisease || 'Under Veterinary Treatment',
           vetNotes: activeCase.vetNotes || 'Clinical examination in progress',
           prescriptions: activeCase.prescriptions || [],
@@ -39,17 +57,19 @@ router.get('/', authenticate, (req, res) => {
       } else if (
         dynamicStatus.toLowerCase().includes('sick') ||
         dynamicStatus.toLowerCase().includes('treatment') ||
-        dynamicStatus.toLowerCase().includes('examination') ||
         dynamicStatus.toLowerCase().includes('critical')
       ) {
         hasOngoingTreatment = true;
         dynamicStatus = 'Ongoing Treatment';
-      } else {
-        dynamicStatus = 'Healthy';
       }
 
       return {
         ...animal,
+        id: animal.animalId || animal.id,
+        tagNumber: animal.earTagId || animal.tagNumber,
+        earTagId: animal.earTagId || animal.tagNumber,
+        species: animal.type || animal.species,
+        ageYears: animal.ageYears || 3,
         healthStatus: dynamicStatus,
         hasOngoingTreatment,
         treatmentInfo
@@ -63,18 +83,17 @@ router.get('/', authenticate, (req, res) => {
   }
 });
 
-// GET /api/animals/dashboard-summary (Stats for Farmer Home Dashboard)
+// GET /api/animals/dashboard-summary
 router.get('/dashboard-summary', authenticate, (req, res) => {
   try {
-    const farmerId = req.user.id;
+    const farmerId = req.user.id || req.user._id;
     const myAnimals = db.findAll('animals', a => a.ownerId === farmerId);
     const myAppointments = db.findAll('appointments', a => a.farmerId === farmerId);
     const schedules = db.findAll('vaccinationSchedules');
 
-    // Count vaccinations due (schedules active in farmer's district)
     const district = (req.user.district || 'Pune').toLowerCase();
     const activeSchedules = schedules.filter(s => 
-      s.district.toLowerCase() === district && s.status === 'active'
+      s.district && s.district.toLowerCase() === district && s.status === 'active'
     );
 
     return res.json({
@@ -82,8 +101,8 @@ router.get('/dashboard-summary', authenticate, (req, res) => {
       vaccinationsDue: activeSchedules.length || 2,
       appointmentsToday: myAppointments.length > 0 ? myAppointments.length : 1,
       weather: {
-        temp: '26°C',
-        condition: 'Clear Sky',
+        temp: '28°C',
+        condition: 'Humid/Clear',
         city: req.user.district || 'Pune',
         state: req.user.state || 'Maharashtra'
       }
@@ -95,89 +114,175 @@ router.get('/dashboard-summary', authenticate, (req, res) => {
 });
 
 // GET /api/animals/:id
-router.get('/:id', authenticate, (req, res) => {
+router.get('/:id', authenticate, async (req, res) => {
   try {
-    const animal = db.findById('animals', req.params.id);
+    let animal;
+    if (isConnected) {
+      animal = await Animal.findOne({
+        $or: [{ animalId: req.params.id }, { earTagId: req.params.id }]
+      }).lean();
+    } else {
+      animal = db.findById('animals', req.params.id) ||
+               db.findAll('animals', a => a.tagNumber === req.params.id || a.earTagId === req.params.id)[0];
+    }
+
     if (!animal) return res.status(404).json({ error: 'Animal not found.' });
 
-    // Attach active case details if any
-    const activeCase = db.findAll('cases', c => c.animalId === animal.id && c.status !== 'resolved')[0];
-    const isOngoing = activeCase != null || animal.healthStatus.toLowerCase().includes('treatment');
-
-    return res.json({
+    const response = {
       ...animal,
-      healthStatus: isOngoing ? 'Ongoing Treatment' : 'Healthy',
-      hasOngoingTreatment: isOngoing,
-      activeCase
-    });
+      id: animal.animalId || animal.id,
+      tagNumber: animal.earTagId || animal.tagNumber,
+      species: animal.type || animal.species
+    };
+    return res.json(response);
   } catch (err) {
     return res.status(500).json({ error: 'Error fetching animal.' });
   }
 });
 
-// POST /api/animals (Add new animal)
-// Requirement 6: Asks Name, Age, and Ear Tag Number
-// Requirement 7: System-generated internal animal ID not shown to farmer
-router.post('/', authenticate, requireRole('farmer', 'government_admin'), (req, res) => {
+// GET /api/animals/:id/medical-history
+router.get('/:id/medical-history', authenticate, async (req, res) => {
   try {
-    const { name, age, ageYears, tagNumber, earTagNumber, species, breed, gender, photoUrl } = req.body;
+    const history = await medicalReportService.getFullMedicalHistory(req.params.id);
+    return res.json(history);
+  } catch (err) {
+    return res.status(404).json({ error: err.message });
+  }
+});
+
+// GET /api/animals/:id/medical-report (Printable HTML / PDF format)
+router.get('/:id/medical-report', authenticate, async (req, res) => {
+  try {
+    const history = await medicalReportService.getFullMedicalHistory(req.params.id);
+    const html = medicalReportService.generateHtmlReport(history);
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(html);
+  } catch (err) {
+    return res.status(404).send(`<h1>Report Error</h1><p>${err.message}</p>`);
+  }
+});
+
+// POST /api/animals (Register new animal with unique Ear Tag validation)
+router.post('/', authenticate, requireRole('farmer', 'FARMER', 'government_admin', 'ADMIN'), async (req, res) => {
+  try {
+    const { name, age, ageYears, tagNumber, earTagNumber, earTagId, species, type, breed, gender, photoUrl } = req.body;
 
     const resolvedName = name ? name.trim() : '';
-    const resolvedTag = (tagNumber || earTagNumber || '').trim().toUpperCase();
+    const resolvedTag = (tagNumber || earTagNumber || earTagId || '').trim().toUpperCase();
     const resolvedAge = Number(ageYears || age) || 1;
-    const resolvedSpecies = species || 'Cow';
-    const resolvedBreed = breed ? breed.trim() : (resolvedSpecies === 'Buffalo' ? 'Murrah' : (resolvedSpecies === 'Goat' ? 'Boer' : 'HF Cross'));
+    const resolvedSpecies = type || species || 'Cow';
+    const resolvedBreed = breed ? breed.trim() : (resolvedSpecies.toLowerCase().includes('buffalo') ? 'Murrah' : 'HF Cross');
 
     if (!resolvedName) {
       return res.status(400).json({ error: 'Animal Name is required.' });
     }
 
     if (!resolvedTag) {
-      return res.status(400).json({ error: 'Ear Tag Number is required.' });
+      return res.status(400).json({ error: 'Ear Tag ID is required.' });
     }
 
-    // Requirement 7: System Reference ID for internal backend / vet reference (hidden from farmer)
-    const internalSystemId = `SYS-ANML-${uuidv4().substring(0, 8).toUpperCase()}`;
+    // REQUIREMENT 8: Ear Tag ID must be unique. Reject duplicates!
+    let duplicate = false;
+    if (isConnected) {
+      const existing = await Animal.findOne({ earTagId: resolvedTag });
+      if (existing) duplicate = true;
+    } else {
+      const existing = db.findAll('animals', a => (a.tagNumber && a.tagNumber.toUpperCase() === resolvedTag) || (a.earTagId && a.earTagId.toUpperCase() === resolvedTag));
+      if (existing.length > 0) duplicate = true;
+    }
 
-    // Select default photo asset matching the species
+    if (duplicate) {
+      return res.status(409).json({
+        error: `Ear Tag ID '${resolvedTag}' is already registered in the National Animal Health Network. Duplicate tags are prohibited.`
+      });
+    }
+
+    // System-generated human-readable Animal ID
+    const animalId = generateAnimalId();
+
     let defaultPhoto = 'assets/images/animal_cow.png';
-    if (resolvedSpecies.toLowerCase().includes('buffalo')) {
-      defaultPhoto = 'assets/images/animal_buffalo.png';
-    } else if (resolvedSpecies.toLowerCase().includes('goat')) {
-      defaultPhoto = 'assets/images/animal_goat.png';
-    }
+    if (resolvedSpecies.toLowerCase().includes('buffalo')) defaultPhoto = 'assets/images/animal_buffalo.png';
+    else if (resolvedSpecies.toLowerCase().includes('goat')) defaultPhoto = 'assets/images/animal_goat.png';
 
-    const newAnimal = {
-      id: internalSystemId, // Internal system reference
-      tagNumber: resolvedTag, // Ear Tag Number shown to farmer
-      ownerId: req.user.id,
+    const animalDoc = {
+      id: animalId,
+      animalId,
+      earTagId: resolvedTag,
+      tagNumber: resolvedTag,
+      ownerId: req.user.id || req.user._id,
       name: resolvedName,
       species: resolvedSpecies,
+      type: resolvedSpecies,
       breed: resolvedBreed,
       ageYears: resolvedAge,
+      age: `${resolvedAge} years`,
       gender: gender || 'Female',
       lactationStage: 'Active',
       dailyMilkYieldLiters: 10.0,
       photoUrl: photoUrl || defaultPhoto,
       vaccinationStatus: 'Up to Date',
-      healthStatus: 'Healthy',
+      healthStatus: 'HEALTHY',
       location: req.user.location || { lat: 18.5204, lng: 73.8567 },
+      district: req.user.district || 'Pune',
+      state: req.user.state || 'Maharashtra',
       createdAt: new Date().toISOString()
     };
 
-    db.create('animals', newAnimal);
-    return res.status(201).json(newAnimal);
+    if (isConnected) {
+      await Animal.create({
+        ...animalDoc,
+        location: { type: 'Point', coordinates: [req.user.location?.lng || 73.8567, req.user.location?.lat || 18.5204] }
+      });
+    }
+
+    db.create('animals', animalDoc);
+    return res.status(201).json(animalDoc);
   } catch (err) {
     console.error('Error adding animal:', err);
     return res.status(500).json({ error: 'Failed to register animal.' });
   }
 });
 
-// PATCH /api/animals/:id (Edit animal details)
+// POST /api/animals/:id/images (Support 4-side animal images: FRONT, BACK, LEFT, RIGHT)
+router.post('/:id/images', authenticate, async (req, res) => {
+  try {
+    const { viewType, imageUrl } = req.body;
+    const allowedViews = ['FRONT', 'BACK', 'LEFT', 'RIGHT'];
+
+    if (!viewType || !allowedViews.includes(viewType.toUpperCase())) {
+      return res.status(400).json({
+        error: `Invalid viewType. Supported views are: ${allowedViews.join(', ')}`
+      });
+    }
+
+    if (!imageUrl) {
+      return res.status(400).json({ error: 'Image URL is required.' });
+    }
+
+    const imageRecord = {
+      id: `img-${uuidv4().substring(0, 8)}`,
+      animalId: req.params.id,
+      imageUrl,
+      viewType: viewType.toUpperCase(),
+      uploadedAt: new Date().toISOString()
+    };
+
+    if (isConnected) {
+      await AnimalImage.create(imageRecord);
+    }
+    db.create('animalImages', imageRecord);
+
+    return res.status(201).json(imageRecord);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to upload animal side image.' });
+  }
+});
+
+// PATCH /api/animals/:id
 router.patch('/:id', authenticate, (req, res) => {
   try {
     const existing = db.findById('animals', req.params.id) ||
-                     db.findAll('animals', a => a.tagNumber === req.params.id)[0];
+                     db.findAll('animals', a => a.tagNumber === req.params.id || a.earTagId === req.params.id)[0];
     if (!existing) {
       return res.status(404).json({ error: 'Animal not found.' });
     }

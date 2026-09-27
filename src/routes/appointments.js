@@ -103,10 +103,27 @@ router.post('/', authenticate, (req, res) => {
 // POST /api/appointments/queue-call (Instant Queue Triage Registration)
 router.post('/queue-call', authenticate, (req, res) => {
   try {
-    const { doctorName, doctorImage, animalName, expectedTime, vetId, doctorId } = req.body;
+    const {
+      doctorName,
+      doctorImage,
+      animalName,
+      animalTag,
+      expectedTime,
+      vetId,
+      doctorId,
+      symptoms,
+      description,
+      photoUrls,
+      photos,
+      animalId,
+      species,
+    } = req.body;
     const targetVetId = vetId || doctorId || 'usr-vet-1';
     const vet = db.findById('users', targetVetId) || db.findAll('users', u => u.role === 'vet')[0];
     const callRoomId = `agora-${uuidv4().substring(0, 10)}`;
+    const parsedSymptoms = Array.isArray(symptoms) ? symptoms : (symptoms ? [symptoms] : []);
+    const parsedPhotos = Array.isArray(photoUrls) ? photoUrls : (Array.isArray(photos) ? photos : []);
+
     const newQueueApt = {
       id: `queue-${uuidv4().substring(0, 8)}`,
       farmerId: req.user.id,
@@ -119,8 +136,13 @@ router.post('/queue-call', authenticate, (req, res) => {
       vetPhone: vet ? vet.phone : '+91 98220 11223',
       hospitalClinic: vet ? vet.hospitalClinic : 'Rural Veterinary Dispensary, Pune Division',
       vetImage: doctorImage || 'assets/images/doctor_1.png',
+      animalId: animalId || null,
       animalName: animalName || 'Livestock',
-      animalTag: 'MH-LIVE-01',
+      animalTag: animalTag || 'MH-LIVE-01',
+      species: species || 'Cattle',
+      symptoms: parsedSymptoms,
+      description: description || '',
+      photoUrls: parsedPhotos,
       type: 'video_call',
       status: 'in_queue',
       callStatus: 'waiting', // waiting | ringing | active | completed | declined
@@ -128,7 +150,9 @@ router.post('/queue-call', authenticate, (req, res) => {
       agoraChannel: callRoomId,
       scheduledAt: new Date().toISOString(),
       scheduledTime: 'Instant Triage Queue',
-      notes: `Virtual triage queue wait (~${expectedTime || '2-4 mins'})`,
+      notes: description
+        ? `${description} (Symptoms: ${parsedSymptoms.join(', ')})`
+        : `Virtual triage queue wait (~${expectedTime || '2-4 mins'}) - Symptoms: ${parsedSymptoms.join(', ')}`,
       createdAt: new Date().toISOString()
     };
 

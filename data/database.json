@@ -199,6 +199,32 @@
       },
       "healthStatus": "Healthy",
       "createdAt": "2026-02-05T12:00:00.000Z"
+    },
+    {
+      "id": "ANM-2026-924475",
+      "animalId": "ANM-2026-924475",
+      "earTagId": "ET-893421",
+      "tagNumber": "ET-893421",
+      "ownerId": "usr-farmer-1",
+      "name": "Archit",
+      "species": "Goat",
+      "type": "Goat",
+      "breed": "Boer",
+      "ageYears": 2,
+      "age": "2 years",
+      "gender": "Female",
+      "lactationStage": "Active",
+      "dailyMilkYieldLiters": 10,
+      "photoUrl": "assets/images/animal_goat.png",
+      "vaccinationStatus": "Up to Date",
+      "healthStatus": "HEALTHY",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T10:59:29.309Z"
     }
   ],
   "cases": [
@@ -657,6 +683,71 @@
         "Carcass deep burial protocol with quicklime"
       ],
       "createdAt": "2026-03-20T14:00:00.000Z"
+    },
+    {
+      "id": "OBK-2026-669607",
+      "outbreakId": "OBK-2026-421559",
+      "diseaseCategory": "General Bovine Health",
+      "region": "Pune, Maharashtra",
+      "district": "Pune",
+      "state": "Maharashtra",
+      "location": {
+        "type": "Point",
+        "coordinates": [
+          73.8567,
+          18.5204
+        ]
+      },
+      "caseCount": 3,
+      "timeWindowDays": 30,
+      "observedCaseScore": 12,
+      "environmentalScore": 20,
+      "combinedRiskScore": 32,
+      "riskCategory": "MODERATE",
+      "statusWording": "Environmental conditions associated with elevated risk",
+      "recommendation": "Monitor herd hydration, body temperature, and report early fever to dispensary.",
+      "weatherSnapshot": {
+        "temp": 28.5,
+        "humidity": 68,
+        "condition": "Humid/Scattered Clouds",
+        "rain": 0
+      },
+      "forecastSnapshot": [
+        {
+          "timestamp": "2026-09-27T13:26:45.217Z",
+          "temp": 29,
+          "humidity": 70,
+          "rain": 0.5,
+          "condition": "Rain",
+          "description": "light rain shower"
+        },
+        {
+          "timestamp": "2026-09-27T16:26:45.217Z",
+          "temp": 27.5,
+          "humidity": 75,
+          "rain": 2.1,
+          "condition": "Rain",
+          "description": "moderate rain"
+        },
+        {
+          "timestamp": "2026-09-27T22:26:45.217Z",
+          "temp": 25,
+          "humidity": 82,
+          "rain": 0,
+          "condition": "Clouds",
+          "description": "overcast"
+        },
+        {
+          "timestamp": "2026-09-28T10:26:45.217Z",
+          "temp": 26.5,
+          "humidity": 78,
+          "rain": 1.2,
+          "condition": "Rain",
+          "description": "monsoon showers"
+        }
+      ],
+      "modelVersion": "outbreak-risk-v1.2",
+      "updatedAt": "2026-09-27T10:56:44.979Z"
     }
   ],
   "broadcasts": [
@@ -689,5 +780,8 @@
       "issueReported": "Passed chemical toxicology, aflatoxin B1 below 10 ppb threshold.",
       "reportedDate": "2026-03-01"
     }
-  ]
+  ],
+  "testBookings": [],
+  "consultations": [],
+  "auditLogs": []
 }
