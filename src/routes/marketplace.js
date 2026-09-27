@@ -43,11 +43,20 @@ router.post('/orders', authenticate, requireRole('farmer'), (req, res) => {
   }
 });
 
-// GET /api/marketplace/sell-listings (Browse animal & dairy listings)
+// GET /api/marketplace/sell-listings (Browse animal & dairy listings - Only Govt Verified listings or farmer's own)
 router.get('/sell-listings', authenticate, (req, res) => {
   try {
     const { category } = req.query;
     let listings = db.findAll('sellListings');
+
+    // Filter to only verified listings OR listings owned by the logged-in user
+    const currentUserId = req.user.id || req.user._id;
+    listings = listings.filter(l => 
+      l.verificationStatus === 'VERIFIED' || 
+      l.isGovVerified === true ||
+      l.farmerId === currentUserId
+    );
+
     if (category) listings = listings.filter(l => l.category === category);
     return res.json(listings);
   } catch (err) {
@@ -55,7 +64,7 @@ router.get('/sell-listings', authenticate, (req, res) => {
   }
 });
 
-// POST /api/marketplace/sell-listings (Farmer sells livestock/produce)
+// POST /api/marketplace/sell-listings (Farmer sells livestock/produce -> Enters PENDING Govt Verification)
 router.post('/sell-listings', authenticate, requireRole('farmer'), (req, res) => {
   try {
     const { title, category, expectedPrice, animalTag, description, photoUrl } = req.body;
@@ -63,22 +72,35 @@ router.post('/sell-listings', authenticate, requireRole('farmer'), (req, res) =>
       return res.status(400).json({ error: 'Title and expectedPrice are required.' });
     }
 
+    const currentUserId = req.user.id || req.user._id;
     const newListing = {
       id: `sell-${uuidv4().substring(0, 8)}`,
-      farmerId: req.user.id,
+      farmerId: currentUserId,
+      farmerName: req.user.name || 'Registered Farmer',
       title,
-      category: category || 'livestock',
+      category: category || 'cow',
       expectedPrice: Number(expectedPrice),
       animalTag: animalTag || '',
       description: description || '',
       photoUrl: photoUrl || '',
       contactPhone: req.user.phone || '',
-      village: req.user.village || '',
-      status: 'active',
+      village: req.user.village || 'Pune Rural',
+      district: req.user.district || 'Pune',
+      status: 'pending_verification',
+      verificationStatus: 'PENDING',
+      isGovVerified: false,
       createdAt: new Date().toISOString()
     };
 
     db.create('sellListings', newListing);
+
+    // Notify Gov Admin via socket
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('new_farmer_sell_listing', newListing);
+      io.emit('kpi_update', { type: 'NEW_MARKETPLACE_LISTING', listing: newListing });
+    }
+
     return res.status(201).json(newListing);
   } catch (err) {
     return res.status(500).json({ error: 'Failed to create sell listing.' });

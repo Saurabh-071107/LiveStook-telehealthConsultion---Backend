@@ -7,6 +7,7 @@ const mongo = require('../db/mongo');
 const { authenticate, requireRole } = require('../middleware/auth');
 const medicalReportService = require('../services/medical-report.service');
 const notificationService = require('../services/notification.service');
+const aiSurveillanceService = require('../services/ai-surveillance.service');
 
 // GET /api/admin/stats (Comprehensive KPIs for Government Dashboard)
 router.get('/stats', authenticate, requireRole('government_admin', 'ADMIN', 'admin'), async (req, res) => {
@@ -277,4 +278,169 @@ router.get('/audit-logs', authenticate, requireRole('government_admin', 'ADMIN',
   }
 });
 
+// GET /api/admin/ai-surveillance (Major AI Disease Outbreak & Early Warning Intelligence)
+router.get('/ai-surveillance', authenticate, requireRole('government_admin', 'ADMIN', 'admin'), async (req, res) => {
+  try {
+    const intelligence = await aiSurveillanceService.getSurveillanceIntelligence();
+    return res.json(intelligence);
+  } catch (err) {
+    console.error('AI Surveillance error:', err);
+    return res.status(500).json({ error: 'Failed to generate AI surveillance intelligence.' });
+  }
+});
+
+// POST /api/admin/ai-surveillance/push-emergency-alert (Push emergency warning to farmers and doctors)
+router.post('/ai-surveillance/push-emergency-alert', authenticate, requireRole('government_admin', 'ADMIN', 'admin'), async (req, res) => {
+  try {
+    const { village, panchayat, district, disease, probabilityPercent, severity, customMessage } = req.body;
+    if (!disease || !village) {
+      return res.status(400).json({ error: 'Disease and target village/panchayat are required.' });
+    }
+
+    const io = req.app.get('io');
+    const result = await aiSurveillanceService.pushEmergencyAlert({
+      village,
+      panchayat,
+      district,
+      disease,
+      probabilityPercent,
+      severity,
+      customMessage,
+      io
+    });
+
+    return res.status(201).json(result);
+  } catch (err) {
+    console.error('Emergency alert push error:', err);
+    return res.status(500).json({ error: 'Failed to dispatch emergency alert.' });
+  }
+});
+
+// GET /api/admin/marketplace/listings (Fetch all farmer sell listings for Govt Verification)
+router.get('/marketplace/listings', authenticate, requireRole('government_admin', 'ADMIN', 'admin'), (req, res) => {
+  try {
+    const { status, category } = req.query;
+    let listings = db.findAll('sellListings');
+
+    // If empty seed some initial listings for verification demo
+    if (!listings || listings.length === 0) {
+      const initial = [
+        {
+          id: 'sell-init-01',
+          farmerId: 'farmer-01',
+          farmerName: 'Rameshwar Patil',
+          farmerPhone: '+91 98220 12345',
+          title: 'Holstein Friesian (HF) Milking Cow - 18L/day',
+          category: 'cow',
+          expectedPrice: 65000,
+          animalTag: 'ET-893421',
+          description: 'High genetic merit crossbred cow, second lactation. Fully vaccinated against FMD and LSD.',
+          photoUrl: 'assets/images/market_item_hf_cow.png',
+          village: 'Khed, Pune',
+          district: 'Pune',
+          verificationStatus: 'PENDING',
+          isGovVerified: false,
+          healthCertificateTag: 'HC-2026-8812',
+          createdAt: new Date(Date.now() - 3600 * 1000).toISOString()
+        },
+        {
+          id: 'sell-init-02',
+          farmerId: 'farmer-02',
+          farmerName: 'Ganesh Deshmukh',
+          farmerPhone: '+91 98221 23456',
+          title: 'Pure Murrah Dairy Buffalo (1st Lactation)',
+          category: 'buffalo',
+          expectedPrice: 85000,
+          animalTag: 'ET-771204',
+          description: 'High fat yield Murrah buffalo. Dewormed and Brucellosis screened.',
+          photoUrl: 'assets/images/market_item_murrah_buffalo.png',
+          village: 'Sinnar, Nashik',
+          district: 'Nashik',
+          verificationStatus: 'VERIFIED',
+          isGovVerified: true,
+          healthCertificateTag: 'HC-2026-6204',
+          verifiedAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+          createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString()
+        },
+        {
+          id: 'sell-init-03',
+          farmerId: 'farmer-03',
+          farmerName: 'Tanaji Jadhav',
+          farmerPhone: '+91 98224 56789',
+          title: 'Pure Kathiawadi Gir Cow (A2 Milk)',
+          category: 'cow',
+          expectedPrice: 72000,
+          animalTag: 'ET-550192',
+          description: 'Indigenous Gir cow with docile temperament. 14L daily milk production.',
+          photoUrl: 'assets/images/market_item_gir_cow.png',
+          village: 'Karad, Satara',
+          district: 'Satara',
+          verificationStatus: 'PENDING',
+          isGovVerified: false,
+          healthCertificateTag: 'HC-2026-4410',
+          createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
+        }
+      ];
+      initial.forEach(l => db.create('sellListings', l));
+      listings = db.findAll('sellListings');
+    }
+
+    if (status) {
+      listings = listings.filter(l => (l.verificationStatus || 'PENDING').toUpperCase() === status.toUpperCase());
+    }
+    if (category) {
+      listings = listings.filter(l => (l.category || '').toLowerCase() === category.toLowerCase());
+    }
+
+    return res.json(listings);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to retrieve marketplace listings.' });
+  }
+});
+
+// PATCH /api/admin/marketplace/listings/:id/verify (Government Admin certifies or rejects farmer listing)
+router.patch('/marketplace/listings/:id/verify', authenticate, requireRole('government_admin', 'ADMIN', 'admin'), (req, res) => {
+  try {
+    const { status, remarks = '', rejectionReason = '' } = req.body; // 'VERIFIED' or 'REJECTED'
+    const normalized = (status || '').toUpperCase();
+
+    if (!['VERIFIED', 'REJECTED', 'PENDING'].includes(normalized)) {
+      return res.status(400).json({ error: 'Status must be VERIFIED, REJECTED, or PENDING.' });
+    }
+
+    const listing = db.findById('sellListings', req.params.id);
+    if (!listing) {
+      return res.status(404).json({ error: 'Marketplace listing not found.' });
+    }
+
+    const updates = {
+      verificationStatus: normalized,
+      isGovVerified: normalized === 'VERIFIED',
+      verifiedBy: req.user.id || req.user._id,
+      verifiedByName: req.user.name || 'Government Livestock Inspector',
+      verifiedAt: new Date().toISOString(),
+      remarks: remarks || (normalized === 'VERIFIED' ? 'Approved for state inter-district livestock trade.' : ''),
+      rejectionReason: normalized === 'REJECTED' ? (rejectionReason || 'Animal health or tag requirements not met') : ''
+    };
+
+    const updated = db.updateById('sellListings', req.params.id, updates);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('marketplace_listing_verified', { listingId: updated.id, status: normalized });
+      io.emit('kpi_update', { type: 'MARKETPLACE_STATUS_UPDATED', listingId: updated.id });
+    }
+
+    return res.json({
+      success: true,
+      message: `Listing ${req.params.id} has been ${normalized === 'VERIFIED' ? 'certified & approved' : 'rejected'}.`,
+      listing: updated
+    });
+  } catch (err) {
+    console.error('Marketplace listing verify error:', err);
+    return res.status(500).json({ error: 'Failed to update listing verification status.' });
+  }
+});
+
 module.exports = router;
+
