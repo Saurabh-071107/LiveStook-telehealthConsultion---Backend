@@ -290,14 +290,19 @@ router.get('/vet-queue', authenticate, (req, res) => {
 // POST /api/appointments/:id/accept-appointment (Vet accepts appointment & issues digital slip number)
 router.post('/:id/accept-appointment', authenticate, (req, res) => {
   try {
-    const apt = db.findById('appointments', req.params.id);
+    let apt = db.findById('appointments', req.params.id);
+    if (!apt) {
+      apt = db.findAll('appointments', a => a.id === req.params.id || a.appointmentNumber === req.params.id)[0];
+    }
     if (!apt) return res.status(404).json({ error: 'Appointment not found.' });
 
-    const appointmentNumber = `APT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const updated = db.updateById('appointments', req.params.id, {
+    const appointmentNumber = apt.appointmentNumber || `APT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const updated = db.updateById('appointments', apt.id, {
       status: 'accepted',
+      isAccepted: true,
       appointmentNumber,
-      acceptedAt: new Date().toISOString()
+      acceptedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     });
 
     return res.json({
@@ -308,6 +313,35 @@ router.post('/:id/accept-appointment', authenticate, (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to accept appointment.' });
+  }
+});
+
+// POST /api/appointments/:id/reject-appointment (Vet rejects appointment with reason)
+router.post('/:id/reject-appointment', authenticate, (req, res) => {
+  try {
+    const { reason } = req.body;
+    let apt = db.findById('appointments', req.params.id);
+    if (!apt) {
+      apt = db.findAll('appointments', a => a.id === req.params.id || a.appointmentNumber === req.params.id)[0];
+    }
+    if (!apt) return res.status(404).json({ error: 'Appointment not found.' });
+
+    const updated = db.updateById('appointments', apt.id, {
+      status: 'rejected',
+      isAccepted: false,
+      callStatus: 'rejected',
+      rejectedAt: new Date().toISOString(),
+      rejectionReason: reason || 'Veterinarian unavailable for the selected slot',
+      updatedAt: new Date().toISOString()
+    });
+
+    return res.json({
+      success: true,
+      message: 'Appointment rejected by veterinarian.',
+      appointment: updated
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to reject appointment.' });
   }
 });
 
