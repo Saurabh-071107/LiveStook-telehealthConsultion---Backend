@@ -440,22 +440,67 @@ const testReportSchema = new mongoose.Schema(
 const vaccinationSchema = new mongoose.Schema(
   {
     animalId: { type: String, required: true, index: true },
-    farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Farmer', required: true, index: true },
+    farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Farmer', index: true },
     vaccineName: { type: String, required: true },
     diseaseTarget: { type: String, required: true },
     batchNumber: { type: String, default: 'BATCH-2026-VET' },
-    administeredDate: { type: String, required: true },
-    nextDueDate: { type: String, required: true, index: true },
+    administeredDate: { type: String },
+    nextDueDate: { type: String, index: true },
     status: {
       type: String,
       required: true,
       default: 'COMPLETED',
-      enum: ['COMPLETED', 'UPCOMING', 'OVERDUE'],
+      enum: ['COMPLETED', 'UPCOMING', 'DUE', 'OVERDUE', 'PENDING_AI'],
       index: true,
     },
     administeredBy: { type: String, default: 'Government Veterinary Officer' },
+    certificateId: { type: String, default: '' },
     vetId: { type: mongoose.Schema.Types.ObjectId, ref: 'Veterinarian' },
     notes: { type: String, default: '' },
+    aiRecommendation: { type: mongoose.Schema.Types.Mixed },
+  },
+  { timestamps: true }
+);
+
+const vaccinationBookingSchema = new mongoose.Schema(
+  {
+    id: { type: String, index: true },
+    bookingId: { type: String, unique: true, sparse: true, index: true }, // VB-2026-XXXXXX
+    scheduleId: { type: String, index: true },
+    farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Farmer', index: true },
+    farmerName: { type: String, default: '' },
+    farmerPhone: { type: String, default: '' },
+    village: { type: String, default: 'Pune' },
+    district: { type: String, default: 'Pune', index: true },
+    animalId: { type: String, required: true, index: true },
+    animalTag: { type: String, required: true, index: true, uppercase: true, trim: true },
+    animalName: { type: String, default: 'Livestock' },
+    species: { type: String, default: 'Cow' },
+    vaccineName: { type: String, required: true, index: true },
+    diseaseTarget: { type: String, default: '' },
+    centerName: { type: String, default: 'District Veterinary Centre' },
+    batchNumber: { type: String, default: 'VAC-2026' },
+    bookedDate: { type: String, required: true },
+    slot: { type: String, default: 'Morning (09:00 AM - 12:00 PM)' },
+    verificationOtp: { type: String, default: '' }, // 4-digit OTP
+    assignedVaccinatorName: { type: String, default: '' },
+    assignedVaccinatorPhone: { type: String, default: '' },
+    coldChainStatus: { type: String, default: '2°C - 8°C Verified' },
+    status: {
+      type: String,
+      required: true,
+      default: 'REQUESTED',
+      enum: ['REQUESTED', 'CONFIRMED', 'ACCEPTED', 'OUT_FOR_VACCINATION', 'ADMINISTERED', 'COMPLETED', 'CANCELLED'],
+      index: true,
+    },
+    certificateIssued: { type: Boolean, default: false },
+    certificateId: { type: String, default: '' }, // CERT-VAC-2026-XXXXXX
+    administeredAt: { type: Date },
+    acceptedAt: { type: Date },
+    administeredBy: { type: String, default: '' },
+    remarks: { type: String, default: '' },
+    aiTriggered: { type: Boolean, default: false },
+    weatherAlert: { type: String, default: '' },
   },
   { timestamps: true }
 );
@@ -558,6 +603,7 @@ module.exports = {
   TestBooking: mongoose.model('TestBooking', testBookingSchema),
   TestReport: mongoose.model('TestReport', testReportSchema),
   Vaccination: mongoose.model('Vaccination', vaccinationSchema),
+  VaccinationBooking: mongoose.model('VaccinationBooking', vaccinationBookingSchema),
   Outbreak: mongoose.model('Outbreak', outbreakSchema),
   WeatherData: mongoose.model('WeatherData', weatherDataSchema),
   AuditLog: mongoose.model('AuditLog', auditLogSchema),

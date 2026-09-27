@@ -161,6 +161,20 @@
       "district": "Pune",
       "state": "Maharashtra",
       "createdAt": "2026-09-27T16:03:47.032Z"
+    },
+    {
+      "id": "usr-farmer-1790527577638",
+      "name": "Balasaheb Shinde",
+      "phone": "9822132796",
+      "email": "9822132796@pashu.in",
+      "role": "farmer",
+      "farmerId": "MH-VAC-87352",
+      "aadhaarNumber": "541279136196",
+      "aadhaarVerified": true,
+      "village": "Baramati Rural",
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T16:46:17.638Z"
     }
   ],
   "animals": [
@@ -348,6 +362,35 @@
       "district": "Pune",
       "state": "Maharashtra",
       "createdAt": "2026-09-27T16:03:47.106Z"
+    },
+    {
+      "id": "ANM-2026-446784",
+      "animalId": "ANM-2026-446784",
+      "earTagId": "ET-VAC-440531",
+      "tagNumber": "ET-VAC-440531",
+      "farmerId": "usr-farmer-1790527577638",
+      "ownerId": "usr-farmer-1790527577638",
+      "farmerUserId": "usr-farmer-1790527577638",
+      "name": "Gauri Lakshmi",
+      "species": "Cow",
+      "type": "Cow",
+      "breed": "Gir Cross",
+      "ageYears": 18,
+      "weightKg": 0,
+      "age": "18 years",
+      "gender": "Female",
+      "lactationStage": "Active",
+      "dailyMilkYieldLiters": 10,
+      "photoUrl": "assets/images/animal_cow.png",
+      "vaccinationStatus": "Up to Date",
+      "healthStatus": "HEALTHY",
+      "location": {
+        "lat": 18.5204,
+        "lng": 73.8567
+      },
+      "district": "Pune",
+      "state": "Maharashtra",
+      "createdAt": "2026-09-27T16:46:17.695Z"
     }
   ],
   "cases": [
@@ -630,6 +673,41 @@
       "slot": "Morning (09:00 AM - 12:00 PM)",
       "status": "confirmed",
       "certificateIssued": false
+    },
+    {
+      "id": "vb-37ace417",
+      "bookingId": "VB-2026-418338",
+      "scheduleId": "SCH-1790527578051",
+      "farmerId": "usr-farmer-1790527577638",
+      "farmerName": "Balasaheb Shinde",
+      "farmerPhone": "9822132796",
+      "village": "Baramati Rural",
+      "district": "Pune",
+      "animalId": "ANM-2026-446784",
+      "animalTag": "ET-VAC-440531",
+      "animalName": "Gauri Lakshmi",
+      "species": "Cow (Gir Cross)",
+      "vaccineName": "Black Quarter Vaccine (BQ)",
+      "diseaseTarget": "Black Quarter (Clostridium chauvoei)",
+      "centerName": "Regional Veterinary & Biological Products Dispensary",
+      "batchNumber": "BQ-BATCH-MH-991",
+      "bookedDate": "2026-09-27",
+      "slot": "Morning (09:00 AM - 12:00 PM)",
+      "verificationOtp": "5162",
+      "assignedVaccinatorName": "Dr. Ramesh Shinde (Senior Paravet)",
+      "assignedVaccinatorPhone": "+91 94220 12345",
+      "coldChainStatus": "2.8°C Monitored",
+      "status": "COMPLETED",
+      "certificateIssued": true,
+      "certificateId": "CERT-VAC-2026-134611",
+      "aiTriggered": true,
+      "weatherAlert": "Clostridial spore alert due to high humidity",
+      "createdAt": "2026-09-27T16:46:18.051Z",
+      "acceptedAt": "2026-09-27T16:46:18.173Z",
+      "updatedAt": "2026-09-27T16:46:18.302Z",
+      "administeredAt": "2026-09-27T16:46:18.302Z",
+      "administeredBy": "Dr. Ramesh Shinde (Senior Paravet)",
+      "remarks": "Vaccine administered via subcutaneous injection. Cold-chain confirmed."
     }
   ],
   "products": [
@@ -809,7 +887,7 @@
     },
     {
       "id": "OBK-2026-669607",
-      "outbreakId": "OBK-2026-240575",
+      "outbreakId": "OBK-2026-952921",
       "diseaseCategory": "General Bovine Health",
       "region": "Pune, Maharashtra",
       "district": "Pune",
@@ -837,7 +915,7 @@
       },
       "forecastSnapshot": [
         {
-          "timestamp": "2026-09-27T19:31:20.991Z",
+          "timestamp": "2026-09-27T19:45:41.926Z",
           "temp": 29,
           "humidity": 70,
           "rain": 0.5,
@@ -845,7 +923,7 @@
           "description": "light rain shower"
         },
         {
-          "timestamp": "2026-09-27T22:31:20.991Z",
+          "timestamp": "2026-09-27T22:45:41.926Z",
           "temp": 27.5,
           "humidity": 75,
           "rain": 2.1,
@@ -853,7 +931,7 @@
           "description": "moderate rain"
         },
         {
-          "timestamp": "2026-09-28T04:31:20.991Z",
+          "timestamp": "2026-09-28T04:45:41.926Z",
           "temp": 25,
           "humidity": 82,
           "rain": 0,
@@ -861,7 +939,7 @@
           "description": "overcast"
         },
         {
-          "timestamp": "2026-09-28T16:31:20.991Z",
+          "timestamp": "2026-09-28T16:45:41.926Z",
           "temp": 26.5,
           "humidity": 78,
           "rain": 1.2,
@@ -870,7 +948,7 @@
         }
       ],
       "modelVersion": "outbreak-risk-v1.2",
-      "updatedAt": "2026-09-27T16:31:21.352Z"
+      "updatedAt": "2026-09-27T16:45:42.270Z"
     }
   ],
   "broadcasts": [
@@ -1172,6 +1250,22 @@
       "finalizedBy": "Dr. Neha Kulkarni",
       "staffName": "Dr. Neha Kulkarni",
       "finalizedAt": "2026-09-27T16:31:42.482Z"
+    }
+  ],
+  "vaccinations": [
+    {
+      "id": "vac-rec-b3c13592",
+      "animalId": "ET-VAC-440531",
+      "farmerId": "usr-farmer-1790527577638",
+      "vaccineName": "Black Quarter Vaccine (BQ)",
+      "diseaseTarget": "Black Quarter (Clostridium chauvoei)",
+      "batchNumber": "BQ-BATCH-MH-991",
+      "administeredDate": "2026-09-27",
+      "nextDueDate": "2027-03-26",
+      "status": "COMPLETED",
+      "administeredBy": "Dr. Ramesh Shinde (Senior Paravet)",
+      "certificateId": "CERT-VAC-2026-134611",
+      "notes": "Vaccine administered via subcutaneous injection. Cold-chain confirmed."
     }
   ]
 }
