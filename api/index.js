@@ -3,7 +3,8 @@ const { connectMongoDB } = require('../src/db/mongo');
 
 let isConnected = false;
 
-module.exports = async (req, res) => {
+// Middleware to establish MongoDB Atlas connection before serving requests
+app.use(async (req, res, next) => {
   if (!isConnected) {
     try {
       await connectMongoDB();
@@ -12,5 +13,8 @@ module.exports = async (req, res) => {
       console.warn('[MongoDB Serverless Connect Notice]', err.message);
     }
   }
-  return app(req, res);
-};
+  next();
+});
+
+module.exports = app;
+

@@ -686,7 +686,7 @@
     },
     {
       "id": "OBK-2026-669607",
-      "outbreakId": "OBK-2026-421559",
+      "outbreakId": "OBK-2026-148584",
       "diseaseCategory": "General Bovine Health",
       "region": "Pune, Maharashtra",
       "district": "Pune",
@@ -747,7 +747,7 @@
         }
       ],
       "modelVersion": "outbreak-risk-v1.2",
-      "updatedAt": "2026-09-27T10:56:44.979Z"
+      "updatedAt": "2026-09-27T11:26:44.993Z"
     }
   ],
   "broadcasts": [
@@ -783,5 +783,7 @@
   ],
   "testBookings": [],
   "consultations": [],
-  "auditLogs": []
+  "auditLogs": [],
+  "diagnoses": [],
+  "treatments": []
 }

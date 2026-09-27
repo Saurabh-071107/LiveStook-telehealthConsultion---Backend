@@ -9,6 +9,18 @@ function loadDatabase() {
   if (dbCache) return dbCache;
   try {
     if (!fs.existsSync(config.databasePath)) {
+      // Check for bundled repository database file
+      const bundledPath = path.resolve(__dirname, '../../data/database.json');
+      if (fs.existsSync(bundledPath)) {
+        try {
+          const raw = fs.readFileSync(bundledPath, 'utf-8');
+          dbCache = JSON.parse(raw);
+          return dbCache;
+        } catch (e) {
+          // ignore
+        }
+      }
+
       const initialData = {
         users: [],
         animals: [],
@@ -23,8 +35,12 @@ function loadDatabase() {
         broadcasts: [],
         regulations: []
       };
-      fs.mkdirSync(path.dirname(config.databasePath), { recursive: true });
-      fs.writeFileSync(config.databasePath, JSON.stringify(initialData, null, 2), 'utf-8');
+      try {
+        fs.mkdirSync(path.dirname(config.databasePath), { recursive: true });
+        fs.writeFileSync(config.databasePath, JSON.stringify(initialData, null, 2), 'utf-8');
+      } catch (e) {
+        // Read-only filesystem in serverless environments
+      }
       dbCache = initialData;
       return dbCache;
     }
@@ -34,7 +50,8 @@ function loadDatabase() {
     return dbCache;
   } catch (err) {
     console.error('Error loading database:', err);
-    throw err;
+    dbCache = { users: [], animals: [], cases: [], appointments: [], vaccinationSchedules: [], vaccinationBookings: [], products: [], orders: [], sellListings: [], outbreaks: [], broadcasts: [], regulations: [] };
+    return dbCache;
   }
 }
 
@@ -43,8 +60,7 @@ function saveDatabase() {
   try {
     fs.writeFileSync(config.databasePath, JSON.stringify(dbCache, null, 2), 'utf-8');
   } catch (err) {
-    console.error('Error saving database:', err);
-    throw err;
+    // In serverless environments disk is read-only; cache remains in-memory and synced with MongoDB Atlas
   }
 }
 

@@ -41,9 +41,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Ensure upload directory exists
-if (!fs.existsSync(config.uploadDir)) {
-  fs.mkdirSync(config.uploadDir, { recursive: true });
+// Ensure upload directory exists safely
+try {
+  if (!fs.existsSync(config.uploadDir)) {
+    fs.mkdirSync(config.uploadDir, { recursive: true });
+  }
+} catch (err) {
+  // Silent fallback for read-only serverless filesystems
 }
 app.use('/uploads', express.static(config.uploadDir));
 
