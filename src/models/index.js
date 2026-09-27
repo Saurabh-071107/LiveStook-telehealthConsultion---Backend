@@ -356,6 +356,7 @@ const treatmentSchema = new mongoose.Schema(
 
 const testBookingSchema = new mongoose.Schema(
   {
+    id: { type: String, index: true },
     bookingId: { type: String, unique: true, sparse: true, index: true },
     testBookingId: { type: String, index: true },
     caseId: { type: String, index: true },
@@ -373,14 +374,29 @@ const testBookingSchema = new mongoose.Schema(
     slotDate: { type: String },
     slotId: { type: String },
     slotTime: { type: String, required: true },
+    collectionOtp: { type: String, default: '' },
+    collectorName: { type: String, default: '' },
+    collectorPhone: { type: String, default: '' },
     status: {
       type: String,
       required: true,
       default: 'TEST_BOOKED',
-      enum: ['TEST_RECOMMENDED', 'TEST_BOOKED', 'TEST_IN_PROGRESS', 'REPORT_AVAILABLE', 'COMPLETED', 'CANCELLED'],
+      enum: [
+        'TEST_RECOMMENDED',
+        'TEST_BOOKED',
+        'ACCEPTED',
+        'SAMPLE_COLLECTED',
+        'IN_TESTING',
+        'TEST_IN_PROGRESS',
+        'REPORT_AVAILABLE',
+        'COMPLETED',
+        'CANCELLED',
+      ],
       index: true,
     },
     notes: { type: String, default: '' },
+    acceptedAt: { type: Date },
+    collectedAt: { type: Date },
     startedAt: { type: Date },
     completedAt: { type: Date },
     staffId: { type: String, default: '' },

@@ -809,7 +809,7 @@
     },
     {
       "id": "OBK-2026-669607",
-      "outbreakId": "OBK-2026-909543",
+      "outbreakId": "OBK-2026-240575",
       "diseaseCategory": "General Bovine Health",
       "region": "Pune, Maharashtra",
       "district": "Pune",
@@ -837,7 +837,7 @@
       },
       "forecastSnapshot": [
         {
-          "timestamp": "2026-09-27T19:03:39.383Z",
+          "timestamp": "2026-09-27T19:31:20.991Z",
           "temp": 29,
           "humidity": 70,
           "rain": 0.5,
@@ -845,7 +845,7 @@
           "description": "light rain shower"
         },
         {
-          "timestamp": "2026-09-27T22:03:39.383Z",
+          "timestamp": "2026-09-27T22:31:20.991Z",
           "temp": 27.5,
           "humidity": 75,
           "rain": 2.1,
@@ -853,7 +853,7 @@
           "description": "moderate rain"
         },
         {
-          "timestamp": "2026-09-28T04:03:39.383Z",
+          "timestamp": "2026-09-28T04:31:20.991Z",
           "temp": 25,
           "humidity": 82,
           "rain": 0,
@@ -861,7 +861,7 @@
           "description": "overcast"
         },
         {
-          "timestamp": "2026-09-28T16:03:39.383Z",
+          "timestamp": "2026-09-28T16:31:20.991Z",
           "temp": 26.5,
           "humidity": 78,
           "rain": 1.2,
@@ -870,7 +870,7 @@
         }
       ],
       "modelVersion": "outbreak-risk-v1.2",
-      "updatedAt": "2026-09-27T16:03:39.745Z"
+      "updatedAt": "2026-09-27T16:31:21.352Z"
     }
   ],
   "broadcasts": [
@@ -1002,6 +1002,124 @@
       "notes": "Follow-up check after treatment",
       "status": "TEST_BOOKED",
       "createdAt": "2026-09-27T16:03:47.585Z"
+    },
+    {
+      "id": "TB-2026-332088",
+      "bookingId": "TB-2026-332088",
+      "testBookingId": "TB-2026-332088",
+      "farmerId": "usr-farmer-1",
+      "farmerName": "Ramesh Patel",
+      "farmerPhone": "9876543210",
+      "animalId": "SYS-ANML-001234",
+      "animalTag": "MH001234",
+      "animalType": "Cow (HF Cross)",
+      "caseId": null,
+      "laboratoryId": "lab-pune-central",
+      "labName": "State Veterinary Biological Diagnostic Research Institute",
+      "district": "Pune",
+      "testType": "Blood Test",
+      "date": "2026-09-30",
+      "slotDate": "2026-09-30",
+      "slotId": "2026-09-30_1000",
+      "slotTime": "09:00 AM - 10:00 AM",
+      "collectionOtp": "9998",
+      "collectorName": "Ramesh Patil (Phlebotomist)",
+      "collectorPhone": "+91 98765 43210",
+      "notes": "Testing collector assignment & OTP flow",
+      "status": "ACCEPTED",
+      "createdAt": "2026-09-27T16:29:18.132Z",
+      "acceptedAt": "2026-09-27T16:29:18.137Z",
+      "staffId": "usr-lab-1",
+      "staffName": "Dr. Neha Kulkarni",
+      "updatedAt": "2026-09-27T16:29:18.137Z"
+    },
+    {
+      "id": "TB-2026-733489",
+      "bookingId": "TB-2026-733489",
+      "testBookingId": "TB-2026-733489",
+      "farmerId": "usr-farmer-1",
+      "farmerName": "Ramesh Patel",
+      "farmerPhone": "9876543210",
+      "animalId": "SYS-ANML-001234",
+      "animalTag": "MH001234",
+      "animalType": "Cow (HF Cross)",
+      "caseId": null,
+      "laboratoryId": "lab-pune-central",
+      "labName": "State Veterinary Biological Diagnostic Research Institute",
+      "district": "Pune",
+      "testType": "Milk Test",
+      "date": "2026-09-30",
+      "slotDate": "2026-09-30",
+      "slotId": "2026-09-30_1000",
+      "slotTime": "09:00 AM - 10:00 AM",
+      "collectionOtp": "7665",
+      "collectorName": "Ramesh Patil (Phlebotomist)",
+      "collectorPhone": "+91 98765 43210",
+      "notes": "Testing collector assignment & OTP flow",
+      "status": "SAMPLE_COLLECTED",
+      "createdAt": "2026-09-27T16:30:45.483Z",
+      "acceptedAt": "2026-09-27T16:30:45.486Z",
+      "staffId": "usr-lab-1",
+      "staffName": "Dr. Neha Kulkarni",
+      "updatedAt": "2026-09-27T16:30:45.491Z",
+      "collectedAt": "2026-09-27T16:30:45.491Z"
+    },
+    {
+      "id": "TB-2026-894205",
+      "bookingId": "TB-2026-894205",
+      "testBookingId": "TB-2026-894205",
+      "farmerId": "usr-farmer-1",
+      "farmerName": "Ramesh Patel",
+      "farmerPhone": "9876543210",
+      "animalId": "SYS-ANML-001234",
+      "animalTag": "MH001234",
+      "animalType": "Cow (HF Cross)",
+      "caseId": null,
+      "laboratoryId": "lab-pune-central",
+      "labName": "State Veterinary Biological Diagnostic Research Institute",
+      "district": "Pune",
+      "testType": "Fecal Test",
+      "date": "2026-09-30",
+      "slotDate": "2026-09-30",
+      "slotId": "2026-09-30_1000",
+      "slotTime": "09:00 AM - 10:00 AM",
+      "collectionOtp": "5346",
+      "collectorName": "Ramesh Patil (Phlebotomist)",
+      "collectorPhone": "+91 98765 43210",
+      "notes": "Testing collector assignment & OTP flow",
+      "status": "REPORT_AVAILABLE",
+      "createdAt": "2026-09-27T16:31:42.460Z",
+      "acceptedAt": "2026-09-27T16:31:42.466Z",
+      "staffId": "usr-lab-1",
+      "staffName": "Dr. Neha Kulkarni",
+      "updatedAt": "2026-09-27T16:31:42.483Z",
+      "collectedAt": "2026-09-27T16:31:42.473Z",
+      "startedAt": "2026-09-27T16:31:42.478Z",
+      "reportId": "RPT-2026-678547",
+      "report": {
+        "id": "RPT-2026-678547",
+        "reportId": "RPT-2026-678547",
+        "bookingId": "TB-2026-894205",
+        "testBookingId": "TB-2026-894205",
+        "animalId": "SYS-ANML-001234",
+        "animalTag": "MH001234",
+        "caseId": null,
+        "testType": "Fecal Test",
+        "testResult": "Normal CBC Profile",
+        "resultSummary": "White blood cells, RBC and platelets all within standard physiological range.",
+        "parameters": {
+          "Hemoglobin (Hb)": "11.5 g/dL (Normal: 8.0-15.0)",
+          "Packed Cell Volume (PCV)": "34% (Normal: 24-46)",
+          "WBC Count": "7,800 / uL (Normal: 4,000-12,000)"
+        },
+        "reportFileUrl": "/uploads/reports/sample_pathology_report.pdf",
+        "observations": "Animal is in excellent health.",
+        "isAbnormal": false,
+        "finalizedBy": "Dr. Neha Kulkarni",
+        "staffName": "Dr. Neha Kulkarni",
+        "finalizedAt": "2026-09-27T16:31:42.482Z"
+      },
+      "completedAt": "2026-09-27T16:31:42.483Z"
     }
   ],
   "consultations": [],
@@ -1031,6 +1149,29 @@
       "finalizedBy": "Dr. Neha Kulkarni",
       "staffName": "Dr. Neha Kulkarni",
       "finalizedAt": "2026-09-27T16:03:47.390Z"
+    },
+    {
+      "id": "RPT-2026-678547",
+      "reportId": "RPT-2026-678547",
+      "bookingId": "TB-2026-894205",
+      "testBookingId": "TB-2026-894205",
+      "animalId": "SYS-ANML-001234",
+      "animalTag": "MH001234",
+      "caseId": null,
+      "testType": "Fecal Test",
+      "testResult": "Normal CBC Profile",
+      "resultSummary": "White blood cells, RBC and platelets all within standard physiological range.",
+      "parameters": {
+        "Hemoglobin (Hb)": "11.5 g/dL (Normal: 8.0-15.0)",
+        "Packed Cell Volume (PCV)": "34% (Normal: 24-46)",
+        "WBC Count": "7,800 / uL (Normal: 4,000-12,000)"
+      },
+      "reportFileUrl": "/uploads/reports/sample_pathology_report.pdf",
+      "observations": "Animal is in excellent health.",
+      "isAbnormal": false,
+      "finalizedBy": "Dr. Neha Kulkarni",
+      "staffName": "Dr. Neha Kulkarni",
+      "finalizedAt": "2026-09-27T16:31:42.482Z"
     }
   ]
 }

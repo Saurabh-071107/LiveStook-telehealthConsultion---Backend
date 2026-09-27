@@ -14,6 +14,11 @@ function generateBookingId() {
   return `TB-${year}-${seq}`;
 }
 
+// Helper to generate 4-digit Collection OTP
+function generateCollectionOtp() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
 // GET /api/labs (List available diagnostic laboratories)
 router.get('/', authenticate, async (req, res) => {
   try {
@@ -122,13 +127,13 @@ router.post('/book', authenticate, requireRole('farmer', 'FARMER', 'government_a
       activeTest = await TestBooking.findOne({
         animalTag: cleanTag,
         testType: testType,
-        status: { $in: ['TEST_BOOKED', 'TEST_IN_PROGRESS', 'SAMPLE_COLLECTED'] }
+        status: { $in: ['TEST_BOOKED', 'ACCEPTED', 'SAMPLE_COLLECTED', 'IN_TESTING', 'TEST_IN_PROGRESS'] }
       }).lean();
     } else {
       activeTest = db.findAll('testBookings', b => 
         (b.animalTag === cleanTag || b.animalId === (animal.animalId || animal.id)) &&
         b.testType === testType &&
-        ['TEST_BOOKED', 'TEST_IN_PROGRESS', 'SAMPLE_COLLECTED'].includes(b.status)
+        ['TEST_BOOKED', 'ACCEPTED', 'SAMPLE_COLLECTED', 'IN_TESTING', 'TEST_IN_PROGRESS'].includes(b.status)
       )[0];
     }
 
@@ -139,6 +144,7 @@ router.post('/book', authenticate, requireRole('farmer', 'FARMER', 'government_a
     }
 
     const bookingId = generateBookingId();
+    const collectionOtp = generateCollectionOtp();
     const targetDistrict = animal.district || req.user.district || 'Pune';
     const resolvedLabId = laboratoryId || (targetDistrict.toLowerCase() === 'baramati' ? 'lab-baramati-reg' : 'lab-pune-central');
     const resolvedLabName = labName || (resolvedLabId === 'lab-baramati-reg' 
@@ -164,6 +170,9 @@ router.post('/book', authenticate, requireRole('farmer', 'FARMER', 'government_a
       slotDate: date || new Date().toISOString().split('T')[0],
       slotId: slotId || `${date || 'today'}_1000`,
       slotTime: slotTime || '10:00 AM - 11:00 AM',
+      collectionOtp,
+      collectorName: '',
+      collectorPhone: '',
       notes: notes || '',
       status: 'TEST_BOOKED',
       createdAt: new Date().toISOString()
@@ -188,7 +197,8 @@ router.post('/book', authenticate, requireRole('farmer', 'FARMER', 'government_a
     return res.status(201).json({
       success: true,
       message: `Diagnostic slot successfully booked for ${cleanTag}. Tracking ID: ${bookingId}`,
-      booking: bookingDoc
+      booking: bookingDoc,
+      collectionOtp
     });
   } catch (err) {
     console.error('Test booking error:', err);
@@ -219,6 +229,124 @@ router.get('/staff/queue', authenticate, async (req, res) => {
   }
 });
 
+// PATCH /api/labs/tests/:id/accept (Lab staff accepts test and assigns sample collector)
+router.patch('/tests/:id/accept', authenticate, requireRole('lab_staff', 'LAB_STAFF', 'admin', 'ADMIN', 'government_admin'), async (req, res) => {
+  try {
+    const { collectorName, collectorPhone } = req.body;
+    const assignedCollector = collectorName || 'Ramesh Patil (Phlebotomist)';
+    const assignedPhone = collectorPhone || '+91 98765 43210';
+
+    let updated = null;
+    if (isConnected) {
+      updated = await TestBooking.findOneAndUpdate(
+        { $or: [{ bookingId: req.params.id }, { testBookingId: req.params.id }, { id: req.params.id }] },
+        {
+          status: 'ACCEPTED',
+          collectorName: assignedCollector,
+          collectorPhone: assignedPhone,
+          acceptedAt: new Date(),
+          staffId: req.user._id ? req.user._id.toString() : req.user.id,
+          staffName: req.user.name || 'Laboratory Staff'
+        },
+        { new: true }
+      ).lean();
+    }
+
+    const existing = db.findById('testBookings', req.params.id) ||
+                     db.findAll('testBookings', b => b.bookingId === req.params.id || b.testBookingId === req.params.id)[0];
+    if (existing) {
+      const updatedMem = db.updateById('testBookings', existing.id, {
+        status: 'ACCEPTED',
+        collectorName: assignedCollector,
+        collectorPhone: assignedPhone,
+        acceptedAt: new Date().toISOString(),
+        staffId: req.user.id,
+        staffName: req.user.name
+      });
+      if (!updated) updated = updatedMem;
+    }
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('lab_queue_update', { type: 'TEST_ACCEPTED', id: req.params.id, collectorName: assignedCollector });
+      io.emit('test_status_update', { id: req.params.id, status: 'ACCEPTED', collectorName: assignedCollector });
+    }
+
+    return res.json({
+      success: true,
+      message: `Test booking accepted. Sample collector ${assignedCollector} assigned.`,
+      booking: updated || existing
+    });
+  } catch (err) {
+    console.error('Accept test error:', err);
+    return res.status(500).json({ error: 'Failed to accept test and assign collector.' });
+  }
+});
+
+// POST /api/labs/tests/:id/verify-collection (Verify 4-digit OTP provided by farmer upon sample collection)
+router.post('/tests/:id/verify-collection', authenticate, requireRole('lab_staff', 'LAB_STAFF', 'admin', 'ADMIN', 'government_admin'), async (req, res) => {
+  try {
+    const { otp } = req.body;
+
+    let existingBooking = null;
+    if (isConnected) {
+      existingBooking = await TestBooking.findOne({
+        $or: [{ bookingId: req.params.id }, { id: req.params.id }]
+      });
+    }
+
+    if (!existingBooking) {
+      existingBooking = db.findById('testBookings', req.params.id) ||
+                        db.findAll('testBookings', b => b.bookingId === req.params.id)[0];
+    }
+
+    if (!existingBooking) {
+      return res.status(404).json({ error: 'Test booking record not found.' });
+    }
+
+    const cleanOtp = String(otp || '').trim();
+    const expectedOtp = String(existingBooking.collectionOtp || '').trim();
+
+    if (!cleanOtp || cleanOtp !== expectedOtp) {
+      return res.status(400).json({
+        error: 'Invalid Collection OTP. Please request the correct 4-digit OTP displayed on the farmer\'s app.'
+      });
+    }
+
+    existingBooking.status = 'SAMPLE_COLLECTED';
+    existingBooking.collectedAt = new Date();
+
+    let updated = null;
+    if (isConnected && typeof existingBooking.save === 'function') {
+      await existingBooking.save();
+      updated = existingBooking.toObject();
+    }
+
+    if (existingBooking.id) {
+      const memUpdated = db.updateById('testBookings', existingBooking.id, {
+        status: 'SAMPLE_COLLECTED',
+        collectedAt: new Date().toISOString()
+      });
+      if (!updated) updated = memUpdated;
+    }
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('lab_queue_update', { type: 'SAMPLE_COLLECTED', id: req.params.id });
+      io.emit('test_status_update', { id: req.params.id, status: 'SAMPLE_COLLECTED' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Sample collection verified successfully via OTP.',
+      booking: updated || existingBooking
+    });
+  } catch (err) {
+    console.error('Verify collection error:', err);
+    return res.status(500).json({ error: 'Failed to verify sample collection OTP.' });
+  }
+});
+
 // PATCH /api/labs/tests/:id/start (Lab staff starts diagnostic test processing)
 router.patch('/tests/:id/start', authenticate, requireRole('lab_staff', 'LAB_STAFF', 'admin', 'ADMIN', 'government_admin'), async (req, res) => {
   try {
@@ -226,9 +354,9 @@ router.patch('/tests/:id/start', authenticate, requireRole('lab_staff', 'LAB_STA
 
     if (isConnected) {
       updated = await TestBooking.findOneAndUpdate(
-        { $or: [{ bookingId: req.params.id }, { id: req.params.id }] },
+        { $or: [{ bookingId: req.params.id }, { testBookingId: req.params.id }, { id: req.params.id }] },
         {
-          status: 'TEST_IN_PROGRESS',
+          status: 'IN_TESTING',
           startedAt: new Date(),
           staffId: req.user._id ? req.user._id.toString() : req.user.id,
           staffName: req.user.name || 'Laboratory Pathologist'
@@ -238,22 +366,24 @@ router.patch('/tests/:id/start', authenticate, requireRole('lab_staff', 'LAB_STA
     }
 
     const existing = db.findById('testBookings', req.params.id) ||
-                     db.findAll('testBookings', b => b.bookingId === req.params.id)[0];
+                     db.findAll('testBookings', b => b.bookingId === req.params.id || b.testBookingId === req.params.id)[0];
     if (existing) {
-      db.updateById('testBookings', existing.id, {
-        status: 'TEST_IN_PROGRESS',
+      const memUpdated = db.updateById('testBookings', existing.id, {
+        status: 'IN_TESTING',
         startedAt: new Date().toISOString(),
         staffId: req.user.id,
         staffName: req.user.name
       });
+      if (!updated) updated = memUpdated;
       if (existing.caseId) {
-        db.updateById('cases', existing.caseId, { status: 'TEST_IN_PROGRESS' });
+        db.updateById('cases', existing.caseId, { status: 'IN_TESTING' });
       }
     }
 
     const io = req.app.get('io');
     if (io) {
       io.emit('lab_queue_update', { type: 'TEST_STARTED', id: req.params.id });
+      io.emit('test_status_update', { id: req.params.id, status: 'IN_TESTING' });
     }
 
     return res.json({
@@ -392,6 +522,74 @@ router.get('/tests/:id/report', authenticate, async (req, res) => {
     return res.json(report);
   } catch (err) {
     return res.status(500).json({ error: 'Failed to retrieve test report.' });
+  }
+});
+
+// GET /api/labs/tests/:id/status (View test status and tracking timeline)
+router.get('/tests/:id/status', authenticate, async (req, res) => {
+  try {
+    let booking = null;
+    if (isConnected) {
+      booking = await TestBooking.findOne({
+        $or: [{ bookingId: req.params.id }, { id: req.params.id }]
+      }).lean();
+    }
+    if (!booking) {
+      booking = db.findById('testBookings', req.params.id) ||
+                db.findAll('testBookings', b => b.bookingId === req.params.id)[0];
+    }
+    if (!booking) return res.status(404).json({ error: 'Test booking not found.' });
+
+    return res.json(booking);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to retrieve test status.' });
+  }
+});
+
+// GET /api/labs/farmer/active-test (Get latest active diagnostic test for logged-in farmer)
+router.get('/farmer/active-test', authenticate, async (req, res) => {
+  try {
+    const farmerId = req.user._id || req.user.id;
+    const phone = req.user.phone;
+    let active = null;
+
+    if (isConnected) {
+      active = await TestBooking.findOne({
+        $or: [{ farmerId }, { farmerPhone: phone }],
+        status: { $nin: ['CANCELLED'] }
+      }).sort({ createdAt: -1 }).lean();
+    }
+    if (!active) {
+      active = db.findAll('testBookings', b => 
+        (b.farmerId === farmerId || b.farmerPhone === phone) && b.status !== 'CANCELLED'
+      ).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0];
+    }
+
+    return res.json(active || null);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to fetch active test.' });
+  }
+});
+
+// GET /api/labs/farmer/reports (Get all completed reports for logged-in farmer's livestock)
+router.get('/farmer/reports', authenticate, async (req, res) => {
+  try {
+    const farmerId = req.user._id || req.user.id;
+    let reports = [];
+
+    if (isConnected) {
+      const animals = await Animal.find({
+        $or: [{ farmerId }, { farmerPhone: req.user.phone }]
+      }).lean();
+      const tags = animals.map(a => (a.earTagId || a.tagNumber || '').toUpperCase()).filter(Boolean);
+      reports = await TestReport.find({ animalTag: { $in: tags } }).sort({ createdAt: -1 }).lean();
+    } else {
+      reports = db.findAll('testReports');
+    }
+
+    return res.json(reports);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to fetch farmer reports.' });
   }
 });
 
