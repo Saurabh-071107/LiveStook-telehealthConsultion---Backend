@@ -1,20 +1,35 @@
-const { app } = require('../src/server');
-const { connectMongoDB } = require('../src/db/mongo');
+let app;
+let serverError = null;
 
-let isConnected = false;
+try {
+  const serverModule = require('../src/server');
+  app = serverModule.app;
+} catch (e) {
+  serverError = e;
+  console.error('[Module Load Error in Vercel Function]', e);
+}
 
-// Middleware to establish MongoDB Atlas connection before serving requests
-app.use(async (req, res, next) => {
-  if (!isConnected) {
-    try {
-      await connectMongoDB();
-      isConnected = true;
-    } catch (err) {
-      console.warn('[MongoDB Serverless Connect Notice]', err.message);
-    }
+module.exports = async (req, res) => {
+  if (serverError) {
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    return res.end(JSON.stringify({
+      error: 'Module Load Error',
+      message: serverError.message,
+      stack: serverError.stack
+    }));
   }
-  next();
-});
 
-module.exports = app;
+  try {
+    const { connectMongoDB, isConnected } = require('../src/db/mongo');
+    if (!isConnected) {
+      await connectMongoDB().catch(err => console.warn('[MongoDB Connect]', err.message));
+    }
+  } catch (dbErr) {
+    console.warn('[MongoDB Setup Error]', dbErr.message);
+  }
+
+  return app(req, res);
+};
+
 

@@ -686,7 +686,7 @@
     },
     {
       "id": "OBK-2026-669607",
-      "outbreakId": "OBK-2026-148584",
+      "outbreakId": "OBK-2026-327736",
       "diseaseCategory": "General Bovine Health",
       "region": "Pune, Maharashtra",
       "district": "Pune",
@@ -714,7 +714,7 @@
       },
       "forecastSnapshot": [
         {
-          "timestamp": "2026-09-27T13:26:45.217Z",
+          "timestamp": "2026-09-27T14:56:45.350Z",
           "temp": 29,
           "humidity": 70,
           "rain": 0.5,
@@ -722,7 +722,7 @@
           "description": "light rain shower"
         },
         {
-          "timestamp": "2026-09-27T16:26:45.217Z",
+          "timestamp": "2026-09-27T17:56:45.351Z",
           "temp": 27.5,
           "humidity": 75,
           "rain": 2.1,
@@ -730,7 +730,7 @@
           "description": "moderate rain"
         },
         {
-          "timestamp": "2026-09-27T22:26:45.217Z",
+          "timestamp": "2026-09-27T23:56:45.351Z",
           "temp": 25,
           "humidity": 82,
           "rain": 0,
@@ -738,7 +738,7 @@
           "description": "overcast"
         },
         {
-          "timestamp": "2026-09-28T10:26:45.217Z",
+          "timestamp": "2026-09-28T11:56:45.352Z",
           "temp": 26.5,
           "humidity": 78,
           "rain": 1.2,
@@ -747,7 +747,7 @@
         }
       ],
       "modelVersion": "outbreak-risk-v1.2",
-      "updatedAt": "2026-09-27T11:26:44.993Z"
+      "updatedAt": "2026-09-27T11:56:45.726Z"
     }
   ],
   "broadcasts": [
