@@ -8,24 +8,18 @@ const { authenticate } = require('../middleware/auth');
 router.get('/', authenticate, (req, res) => {
   try {
     let list = db.findAll('appointments');
+    // Exclude live queue tickets - they belong strictly in /api/appointments/vet-queue
+    list = list.filter(a => a.status !== 'in_queue' && !a.queueToken && !a.tokenNumber);
+
     if (req.user.role === 'farmer') {
       list = list.filter(a => a.farmerId === req.user.id);
     } else if (req.user.role === 'vet') {
       list = list.filter(a => 
         a.vetId === req.user.id || 
-        a.status === 'in_queue' || 
-        a.callStatus === 'waiting' || 
-        a.callStatus === 'ringing' ||
         !a.vetId
       );
     }
-    // Sort in-queue / waiting triage tickets to the top
-    list.sort((a, b) => {
-      const aPriority = (a.status === 'in_queue' || a.callStatus === 'waiting' || a.callStatus === 'ringing') ? 1 : 0;
-      const bPriority = (b.status === 'in_queue' || b.callStatus === 'waiting' || b.callStatus === 'ringing') ? 1 : 0;
-      if (aPriority !== bPriority) return bPriority - aPriority;
-      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-    });
+    list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     return res.json(list);
   } catch (err) {
     return res.status(500).json({ error: 'Failed to retrieve appointments.' });
@@ -321,18 +315,25 @@ router.post('/:id/accept-appointment', authenticate, (req, res) => {
 router.get('/incoming-call', authenticate, (req, res) => {
   try {
     const list = db.findAll('appointments');
-    // Find appointment where farmerId matches, and callStatus is 'ringing' or 'active' within last 5 minutes
-    const activeRinging = list.find(a => 
-      a.farmerId === req.user.id &&
-      (a.callStatus === 'ringing' || a.callStatus === 'active') &&
-      a.callStartedAt && (Date.now() - new Date(a.callStartedAt).getTime() < 5 * 60 * 1000)
-    );
+    const targetAptId = req.query.appointmentId;
+
+    // Match by appointmentId if passed, or matching farmer with ringing/active call
+    const activeRinging = list.find(a => {
+      const isTarget = targetAptId
+        ? (a.id === targetAptId || a.queueToken === targetAptId || a.callRoomId?.includes(targetAptId) || a.agoraChannel?.includes(targetAptId))
+        : true;
+      const isFarmerMatch = a.farmerId === req.user.id || a.farmerPhone === req.user.phone || !a.farmerId;
+      const isCallActive = (a.callStatus === 'ringing' || a.callStatus === 'active');
+      const isRecent = !a.callStartedAt || (Date.now() - new Date(a.callStartedAt).getTime() < 10 * 60 * 1000);
+      return (targetAptId ? isTarget : isFarmerMatch) && isCallActive && isRecent;
+    });
 
     if (activeRinging) {
+      const channel = activeRinging.agoraChannel || activeRinging.callRoomId || `agora-${activeRinging.id}`;
       return res.json({
         hasIncomingCall: true,
         appointment: activeRinging,
-        agoraChannel: activeRinging.agoraChannel || activeRinging.callRoomId,
+        agoraChannel: channel,
         agoraAppId: process.env.AGORA_APP_ID || 'demo_agora_pashu_app_id'
       });
     }
@@ -346,11 +347,26 @@ router.get('/incoming-call', authenticate, (req, res) => {
 // POST /api/appointments/:id/start-call (Doctor initiates Agora call - 5 min check enforced)
 router.post('/:id/start-call', authenticate, (req, res) => {
   try {
-    const existing = db.findById('appointments', req.params.id);
+    const targetId = req.params.id;
+    let existing = db.findById('appointments', targetId);
+    if (!existing) {
+      existing = db.findAll('appointments', a =>
+        a.id === targetId ||
+        a.queueToken === targetId ||
+        a.tokenNumber === targetId ||
+        a.appointmentNumber === targetId ||
+        a.callRoomId?.includes(targetId) ||
+        a.agoraChannel?.includes(targetId)
+      )[0];
+    }
+    // Fallback: If vet is starting call and there's a live in_queue ticket waiting
+    if (!existing) {
+      existing = db.findAll('appointments', a => a.status === 'in_queue' && a.callStatus === 'waiting')[0];
+    }
     if (!existing) return res.status(404).json({ error: 'Appointment not found.' });
 
-    // Enforce 5-minute pre-call rule for scheduled appointments
-    if (existing.scheduledAt && existing.status !== 'in_queue' && !existing.scheduledTime?.toLowerCase().includes('queue')) {
+    // Enforce 5-minute pre-call rule for scheduled appointments only (never lock instant queue)
+    if (existing.scheduledAt && existing.status !== 'in_queue' && !existing.queueToken && !existing.scheduledTime?.toLowerCase().includes('queue')) {
       const scheduledTime = new Date(existing.scheduledAt).getTime();
       const now = Date.now();
       const earliestAllowed = scheduledTime - 5 * 60 * 1000; // 5 mins before
@@ -364,8 +380,8 @@ router.post('/:id/start-call', authenticate, (req, res) => {
       }
     }
 
-    const agoraChannel = existing.callRoomId || `agora-${req.params.id}`;
-    const updated = db.updateById('appointments', req.params.id, {
+    const agoraChannel = existing.callRoomId || existing.agoraChannel || `agora-${existing.id}`;
+    const updated = db.updateById('appointments', existing.id, {
       callStatus: 'ringing',
       callStartedAt: new Date().toISOString(),
       agoraChannel,

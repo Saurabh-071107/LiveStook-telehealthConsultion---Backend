@@ -944,81 +944,7 @@
       "updatedAt": "2026-09-27T19:42:07.084Z"
     }
   ],
-  "appointments": [
-    {
-      "id": "apt-301",
-      "farmerId": "usr-farmer-1",
-      "vetId": "usr-vet-1",
-      "animalId": "anim-101",
-      "caseId": "case-5001",
-      "scheduledAt": "2026-03-26T15:30:00.000Z",
-      "type": "video_call",
-      "status": "completed",
-      "callRoomId": "room-pashu-5001",
-      "callNotes": "Conducted video exam of mouth sores. Instructed farmer on strict isolation of sick cattle and footbath with 4% sodium carbonate.",
-      "callDurationMinutes": 14,
-      "createdAt": "2026-03-24T10:00:00.000Z"
-    },
-    {
-      "id": "apt-302",
-      "farmerId": "usr-farmer-1",
-      "vetId": "usr-vet-1",
-      "animalId": "anim-101",
-      "caseId": "case-5001",
-      "scheduledAt": "2026-03-27T11:00:00.000Z",
-      "type": "physical_visit",
-      "status": "scheduled",
-      "callRoomId": null,
-      "callNotes": "Scheduled follow-up visit to review healing of hoof lesions and administer booster multivitamin.",
-      "createdAt": "2026-03-25T15:00:00.000Z"
-    },
-    {
-      "id": "apt-bd3b4eb4",
-      "farmerId": "usr-farmer-1",
-      "farmerName": "Ramesh Patel",
-      "vetId": "usr-vet-1",
-      "vetName": "Dr. Anand Sharma",
-      "vetSpecialization": "Bovine Medicine & Surgery",
-      "vetPhone": "+91 98220 11223",
-      "hospitalClinic": "Rural Veterinary Dispensary, Pune Division",
-      "animalId": "SYS-ANML-001234",
-      "animalName": "Gauri",
-      "animalTag": "MH001234",
-      "caseId": null,
-      "scheduledAt": "2026-09-26T11:08:24.440Z",
-      "appointmentTimeFormatted": "26 Sept 2026, 04:38 pm",
-      "type": "video_call",
-      "status": "scheduled",
-      "callRoomId": "room-77492996-b",
-      "notes": "Cow showing mild fever and fatigue",
-      "callNotes": "",
-      "callDurationMinutes": 0,
-      "createdAt": "2026-09-26T10:48:24.453Z"
-    },
-    {
-      "id": "apt-3f1d419b",
-      "farmerId": "usr-farmer-1",
-      "farmerName": "Ramesh Patel",
-      "vetId": "usr-vet-1",
-      "vetName": "Dr. Anand Sharma",
-      "vetSpecialization": "Bovine Medicine & Surgery",
-      "vetPhone": "+91 98220 11223",
-      "hospitalClinic": "Rural Veterinary Dispensary, Pune Division",
-      "animalId": "SYS-ANML-002345",
-      "animalName": "Lakshmi",
-      "animalTag": "MH002345",
-      "caseId": null,
-      "scheduledAt": "2026-09-26T13:44:51.787Z",
-      "appointmentTimeFormatted": "26 Sept 2026, 07:14 pm",
-      "type": "video_call",
-      "status": "scheduled",
-      "callRoomId": "room-6df5215b-a",
-      "notes": "Consultation request for Lakshmi (Buffalo)",
-      "callNotes": "",
-      "callDurationMinutes": 0,
-      "createdAt": "2026-09-26T13:24:51.809Z"
-    }
-  ],
+  "appointments": [],
   "vaccinationSchedules": [
     {
       "id": "vac-101",
@@ -1336,7 +1262,7 @@
     },
     {
       "id": "OBK-2026-669607",
-      "outbreakId": "OBK-2026-739007",
+      "outbreakId": "OBK-2026-777525",
       "diseaseCategory": "General Bovine Health",
       "region": "Pune, Maharashtra",
       "district": "Pune",
@@ -1364,7 +1290,7 @@
       },
       "forecastSnapshot": [
         {
-          "timestamp": "2026-09-27T22:59:31.650Z",
+          "timestamp": "2026-09-28T00:04:08.048Z",
           "temp": 29,
           "humidity": 70,
           "rain": 0.5,
@@ -1372,7 +1298,7 @@
           "description": "light rain shower"
         },
         {
-          "timestamp": "2026-09-28T01:59:31.650Z",
+          "timestamp": "2026-09-28T03:04:08.048Z",
           "temp": 27.5,
           "humidity": 75,
           "rain": 2.1,
@@ -1380,7 +1306,7 @@
           "description": "moderate rain"
         },
         {
-          "timestamp": "2026-09-28T07:59:31.650Z",
+          "timestamp": "2026-09-28T09:04:08.048Z",
           "temp": 25,
           "humidity": 82,
           "rain": 0,
@@ -1388,7 +1314,7 @@
           "description": "overcast"
         },
         {
-          "timestamp": "2026-09-28T19:59:31.650Z",
+          "timestamp": "2026-09-28T21:04:08.048Z",
           "temp": 26.5,
           "humidity": 78,
           "rain": 1.2,
@@ -1397,11 +1323,11 @@
         }
       ],
       "modelVersion": "outbreak-risk-v1.2",
-      "updatedAt": "2026-09-27T19:59:32.037Z"
+      "updatedAt": "2026-09-27T21:04:08.463Z"
     },
     {
       "id": "OBK-2026-509826",
-      "outbreakId": "OBK-2026-216048",
+      "outbreakId": "OBK-2026-716399",
       "diseaseCategory": "Foot and Mouth Disease (FMD)",
       "region": "Pune, Maharashtra",
       "district": "Pune",
@@ -1429,7 +1355,7 @@
       },
       "forecastSnapshot": [
         {
-          "timestamp": "2026-09-27T22:59:31.650Z",
+          "timestamp": "2026-09-28T00:04:08.048Z",
           "temp": 29,
           "humidity": 70,
           "rain": 0.5,
@@ -1437,7 +1363,7 @@
           "description": "light rain shower"
         },
         {
-          "timestamp": "2026-09-28T01:59:31.650Z",
+          "timestamp": "2026-09-28T03:04:08.048Z",
           "temp": 27.5,
           "humidity": 75,
           "rain": 2.1,
@@ -1445,7 +1371,7 @@
           "description": "moderate rain"
         },
         {
-          "timestamp": "2026-09-28T07:59:31.650Z",
+          "timestamp": "2026-09-28T09:04:08.048Z",
           "temp": 25,
           "humidity": 82,
           "rain": 0,
@@ -1453,7 +1379,7 @@
           "description": "overcast"
         },
         {
-          "timestamp": "2026-09-28T19:59:31.650Z",
+          "timestamp": "2026-09-28T21:04:08.048Z",
           "temp": 26.5,
           "humidity": 78,
           "rain": 1.2,
@@ -1462,7 +1388,7 @@
         }
       ],
       "modelVersion": "outbreak-risk-v1.2",
-      "updatedAt": "2026-09-27T19:59:32.038Z"
+      "updatedAt": "2026-09-27T21:04:08.464Z"
     }
   ],
   "broadcasts": [
