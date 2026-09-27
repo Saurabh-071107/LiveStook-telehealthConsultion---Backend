@@ -1262,7 +1262,7 @@
     },
     {
       "id": "OBK-2026-669607",
-      "outbreakId": "OBK-2026-777525",
+      "outbreakId": "OBK-2026-389794",
       "diseaseCategory": "General Bovine Health",
       "region": "Pune, Maharashtra",
       "district": "Pune",
@@ -1290,7 +1290,7 @@
       },
       "forecastSnapshot": [
         {
-          "timestamp": "2026-09-28T00:04:08.048Z",
+          "timestamp": "2026-09-28T00:21:16.978Z",
           "temp": 29,
           "humidity": 70,
           "rain": 0.5,
@@ -1298,7 +1298,7 @@
           "description": "light rain shower"
         },
         {
-          "timestamp": "2026-09-28T03:04:08.048Z",
+          "timestamp": "2026-09-28T03:21:16.978Z",
           "temp": 27.5,
           "humidity": 75,
           "rain": 2.1,
@@ -1306,7 +1306,7 @@
           "description": "moderate rain"
         },
         {
-          "timestamp": "2026-09-28T09:04:08.048Z",
+          "timestamp": "2026-09-28T09:21:16.978Z",
           "temp": 25,
           "humidity": 82,
           "rain": 0,
@@ -1314,7 +1314,7 @@
           "description": "overcast"
         },
         {
-          "timestamp": "2026-09-28T21:04:08.048Z",
+          "timestamp": "2026-09-28T21:21:16.978Z",
           "temp": 26.5,
           "humidity": 78,
           "rain": 1.2,
@@ -1323,11 +1323,11 @@
         }
       ],
       "modelVersion": "outbreak-risk-v1.2",
-      "updatedAt": "2026-09-27T21:04:08.463Z"
+      "updatedAt": "2026-09-27T21:21:17.291Z"
     },
     {
       "id": "OBK-2026-509826",
-      "outbreakId": "OBK-2026-716399",
+      "outbreakId": "OBK-2026-242011",
       "diseaseCategory": "Foot and Mouth Disease (FMD)",
       "region": "Pune, Maharashtra",
       "district": "Pune",
@@ -1355,7 +1355,7 @@
       },
       "forecastSnapshot": [
         {
-          "timestamp": "2026-09-28T00:04:08.048Z",
+          "timestamp": "2026-09-28T00:21:16.978Z",
           "temp": 29,
           "humidity": 70,
           "rain": 0.5,
@@ -1363,7 +1363,7 @@
           "description": "light rain shower"
         },
         {
-          "timestamp": "2026-09-28T03:04:08.048Z",
+          "timestamp": "2026-09-28T03:21:16.978Z",
           "temp": 27.5,
           "humidity": 75,
           "rain": 2.1,
@@ -1371,7 +1371,7 @@
           "description": "moderate rain"
         },
         {
-          "timestamp": "2026-09-28T09:04:08.048Z",
+          "timestamp": "2026-09-28T09:21:16.978Z",
           "temp": 25,
           "humidity": 82,
           "rain": 0,
@@ -1379,7 +1379,7 @@
           "description": "overcast"
         },
         {
-          "timestamp": "2026-09-28T21:04:08.048Z",
+          "timestamp": "2026-09-28T21:21:16.978Z",
           "temp": 26.5,
           "humidity": 78,
           "rain": 1.2,
@@ -1388,7 +1388,7 @@
         }
       ],
       "modelVersion": "outbreak-risk-v1.2",
-      "updatedAt": "2026-09-27T21:04:08.464Z"
+      "updatedAt": "2026-09-27T21:21:17.293Z"
     }
   ],
   "broadcasts": [

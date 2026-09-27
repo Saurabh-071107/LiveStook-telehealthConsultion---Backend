@@ -311,20 +311,23 @@ router.post('/:id/accept-appointment', authenticate, (req, res) => {
   }
 });
 
+// In-memory stream buffer for real-time video frame & audio transmission sync
+const activeStreamSessions = new Map();
+
 // GET /api/appointments/incoming-call (Poll / fetch ringing call for farmer)
 router.get('/incoming-call', authenticate, (req, res) => {
   try {
     const list = db.findAll('appointments');
     const targetAptId = req.query.appointmentId;
 
-    // Match by appointmentId if passed, or matching farmer with ringing/active call
+    // Match strictly if callStatus === 'ringing' (Once accepted, it becomes 'active' / 'in_call' so it will NOT ring again!)
     const activeRinging = list.find(a => {
       const isTarget = targetAptId
         ? (a.id === targetAptId || a.queueToken === targetAptId || a.callRoomId?.includes(targetAptId) || a.agoraChannel?.includes(targetAptId))
         : true;
       const isFarmerMatch = a.farmerId === req.user.id || a.farmerPhone === req.user.phone || !a.farmerId;
-      const isCallActive = (a.callStatus === 'ringing' || a.callStatus === 'active');
-      const isRecent = !a.callStartedAt || (Date.now() - new Date(a.callStartedAt).getTime() < 10 * 60 * 1000);
+      const isCallActive = (a.callStatus === 'ringing'); // Strictly ringing!
+      const isRecent = !a.callStartedAt || (Date.now() - new Date(a.callStartedAt).getTime() < 5 * 60 * 1000);
       return (targetAptId ? isTarget : isFarmerMatch) && isCallActive && isRecent;
     });
 
@@ -341,6 +344,62 @@ router.get('/incoming-call', authenticate, (req, res) => {
     return res.json({ hasIncomingCall: false });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to check incoming calls.' });
+  }
+});
+
+// POST /api/appointments/:id/stream-frame (Transmit live video frame & audio metrics)
+router.post('/:id/stream-frame', authenticate, (req, res) => {
+  try {
+    const aptId = req.params.id;
+    const { role, frame, isAudioActive, isMuted, isVideoOff } = req.body;
+    if (!activeStreamSessions.has(aptId)) {
+      activeStreamSessions.set(aptId, {});
+    }
+    const session = activeStreamSessions.get(aptId);
+    const resolvedRole = role || (req.user.role === 'vet' ? 'doctor' : 'farmer');
+    session[resolvedRole] = {
+      frame: frame || (session[resolvedRole]?.frame ?? null),
+      isAudioActive: isAudioActive ?? true,
+      isMuted: isMuted ?? false,
+      isVideoOff: isVideoOff ?? false,
+      timestamp: Date.now()
+    };
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to record stream frame.' });
+  }
+});
+
+// GET /api/appointments/:id/stream-frame (Receive peer's live video frame & audio metrics)
+router.get('/:id/stream-frame', authenticate, (req, res) => {
+  try {
+    const aptId = req.params.id;
+    const peerRole = req.query.peerRole || (req.user.role === 'vet' ? 'farmer' : 'doctor');
+    const session = activeStreamSessions.get(aptId) || {};
+    const peerData = session[peerRole] || null;
+    return res.json({ success: true, peerRole, peerData });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to retrieve stream frame.' });
+  }
+});
+
+// GET /api/appointments/:id (Get real-time appointment status & completion data)
+router.get('/:id', authenticate, (req, res) => {
+  try {
+    let apt = db.findById('appointments', req.params.id);
+    if (!apt) {
+      apt = db.findAll('appointments', a =>
+        a.id === req.params.id ||
+        a.queueToken === req.params.id ||
+        a.tokenNumber === req.params.id ||
+        a.callRoomId?.includes(req.params.id) ||
+        a.agoraChannel?.includes(req.params.id)
+      )[0];
+    }
+    if (!apt) return res.status(404).json({ error: 'Appointment not found.' });
+    return res.json(apt);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to retrieve appointment.' });
   }
 });
 
@@ -433,10 +492,23 @@ router.post('/:id/end-call', authenticate, (req, res) => {
     }
 
     const { callNotes, callDurationMinutes } = req.body;
-    const existing = db.findById('appointments', req.params.id);
+    let existing = db.findById('appointments', req.params.id);
+    if (!existing) {
+      existing = db.findAll('appointments', a =>
+        a.id === req.params.id ||
+        a.queueToken === req.params.id ||
+        a.tokenNumber === req.params.id ||
+        a.appointmentNumber === req.params.id ||
+        a.callRoomId?.includes(req.params.id) ||
+        a.agoraChannel?.includes(req.params.id)
+      )[0];
+    }
+    if (!existing) {
+      existing = db.findAll('appointments', a => (a.callStatus === 'active' || a.callStatus === 'ringing'))[0];
+    }
     if (!existing) return res.status(404).json({ error: 'Appointment not found.' });
 
-    const updated = db.updateById('appointments', req.params.id, {
+    const updated = db.updateById('appointments', existing.id, {
       callStatus: 'completed',
       status: 'completed',
       callEndedAt: new Date().toISOString(),
@@ -445,9 +517,11 @@ router.post('/:id/end-call', authenticate, (req, res) => {
       updatedAt: new Date().toISOString()
     });
 
+    activeStreamSessions.delete(existing.id);
+
     return res.json({
       success: true,
-      message: 'Call concluded and clinical record archived.',
+      message: 'Call concluded and clinical record archived as completed.',
       appointment: updated
     });
   } catch (err) {
